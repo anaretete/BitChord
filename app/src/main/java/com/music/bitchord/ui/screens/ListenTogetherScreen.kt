@@ -49,6 +49,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import com.music.bitchord.ui.components.NativeGlassSurface
+import com.music.bitchord.ui.components.supportsNativeGlassMenu
 import com.music.bitchord.ui.components.IosSwitch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -346,15 +348,27 @@ fun ListenTogetherScreen(
         ModalBottomSheet(
             onDismissRequest = {
                 sheet = null
-                // Closed with the message unread is still read: leaving it set
-                // would surface it on the page underneath, as a line about a
-                // sheet that is no longer there.
                 failure = null
             },
             sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.background,
+            shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+            containerColor = Color.Transparent,
         ) {
-            when (open) {
+            Box(Modifier.fillMaxWidth()) {
+                if (supportsNativeGlassMenu) {
+                    NativeGlassSurface(
+                        modifier = Modifier.matchParentSize(),
+                        topCornersOnly = true,
+                        cornerRadius = 26.dp,
+                    )
+                } else {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .background(MaterialTheme.colorScheme.background),
+                    )
+                }
+                when (open) {
                 PartySheet.Create -> CreatePartySheet(
                     avatarUrl = ListenTogether.myAvatarUrl(),
                     nickname = nickname,
@@ -469,6 +483,7 @@ fun ListenTogetherScreen(
             }
         }
     }
+}
 
     Column(
         modifier = modifier

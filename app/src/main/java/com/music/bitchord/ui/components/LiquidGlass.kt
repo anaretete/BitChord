@@ -39,7 +39,7 @@ import com.music.bitchord.ui.components.backdrop.shadow.Shadow
 import androidx.compose.ui.unit.dp
 
 /** Whether the liquid glass nav bar is turned on — see [AppSettings.liquidGlass]. */
-val LocalLiquidGlassEnabled = staticCompositionLocalOf { false }
+val LocalLiquidGlassEnabled = staticCompositionLocalOf { true }
 
 /** The backdrop content (app UI) that a liquid glass surface samples from. */
 val LocalAppBackdrop = staticCompositionLocalOf<Backdrop> { error("No AppBackdrop provided") }
@@ -60,25 +60,17 @@ internal val LocalGlassExport = compositionLocalOf<LayerBackdrop?> { null }
 fun isGlassSupported(sdkInt: Int = Build.VERSION.SDK_INT): Boolean = sdkInt >= Build.VERSION_CODES.S
 
 /** Apple-matched defaults (Echo's GlassEffectConfig()), fixed rather than user sliders. */
-private const val VIBRANCY = 1f
-private const val BLUR_RADIUS_DP = 8f
-private const val LENS_HEIGHT = 0.5f
-private const val LENS_AMOUNT = 0.5f
+private const val VIBRANCY = 1.3f
+private const val BLUR_RADIUS_DP = 16f
+private const val LENS_HEIGHT = 0.65f
+private const val LENS_AMOUNT = 0.65f
 private const val LENS_MAX_DP = 48f
-private const val SURFACE_OPACITY = 0.4f
+private const val SURFACE_OPACITY = 0.28f
 
 /**
  * Resolution fraction the glass surface records and processes its backdrop at.
- *
- * A third, which is what Echo's `glassResolutionScale` comes to at this blur
- * radius. It was briefly raised to a half while the sharp-text bug was being
- * chased — wrongly, as it turned out: the cause was a transparent backdrop, not
- * the resample (see MainActivity's `paintBackdrop`). A third is nine times fewer
- * pixels than full resolution through the colour matrix, the blur and the lens
- * shader, on as many as six surfaces at once in the middle of a fold, and the
- * blur is what hides the upscale.
  */
-private const val GLASS_RESOLUTION_SCALE = 0.33f
+private const val GLASS_RESOLUTION_SCALE = 1.0f
 
 /**
  * The blur and resolution under [AppSettings.glassPerformance]. With no lens to

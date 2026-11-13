@@ -73,13 +73,21 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.music.bitchord.data.settings.AppSettings
 import com.music.bitchord.ui.components.backdrop.backdrops.SnapshotBackdrop
+import com.music.bitchord.ui.haptics.Haptic
+import com.music.bitchord.ui.haptics.rememberHaptics
 import dev.chrisbanes.haze.HazeState
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -180,7 +188,7 @@ fun Modifier.iosMenuPanel(
     val backdropFrost = blurs && !nativeGlass && backdrop != null && isGlassSupported()
     val hazeFrost = blurs && !nativeGlass && !backdropFrost && hazeState != null
     val fill = fillOverride ?: if (nativeGlass) {
-        colors.fill.copy(alpha = if (!colors.dark) 0.35f else 0.40f)
+        Color.Transparent
     } else if (backdropFrost || hazeFrost) {
         // Thinner on a dark panel while its rows are blended, which takes them
         // further into the colour behind; plain rows want the denser slab back.
@@ -190,7 +198,7 @@ fun Modifier.iosMenuPanel(
     }
     val shadowed = if (castsShadow) iosMenuShadow() else this
     val surface = if (nativeGlass) {
-        shadowed.clip(IosMenuShape).background(fill)
+        shadowed
     } else if (hazeFrost) {
         val style = remember(colors, fill) { menuFrost(colors.fill, alpha = fill.alpha) }
         shadowed.clip(IosMenuShape).optimizedHazeEffect(state = hazeState, style = style)
@@ -201,7 +209,7 @@ fun Modifier.iosMenuPanel(
     }
     return surface
         .clip(IosMenuShape)
-        .border(0.5.dp, rimOverride ?: colors.rim, IosMenuShape)
+        .border(0.5.dp, rimOverride ?: if (nativeGlass) Color.White.copy(alpha = 0.12f) else colors.rim, IosMenuShape)
 }
 
 /** The shadow the menu panel casts. */
@@ -340,21 +348,29 @@ fun IosMenuRow(
     val colors = iosMenuColors()
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    val haptics = rememberHaptics()
     val alpha = if (enabled) 1f else 0.4f
     val foreground = labelColor ?: colors.label
+    val pressedBg = if (pressed) {
+        if (colors.dark) Color(0x28FFFFFF) else Color(0x14000000)
+    } else Color.Transparent
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (pressed) colors.pressed else Color.Transparent)
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(pressedBg)
             .then(
                 if (onClick != null) {
                     Modifier.clickable(
                         interactionSource = interaction,
                         indication = null,
                         enabled = enabled,
-                        onClick = onClick,
+                        onClick = {
+                            haptics.play(Haptic.Select)
+                            onClick()
+                        },
                     )
                 } else {
                     Modifier
@@ -458,18 +474,14 @@ fun <T : Any> IosMenuPopover(
     }
     val reduceMotion = appReduceAnimation || systemAnimationsOff
 
-    val progress = remember { Animatable(0f) }
+    val unfoldX = remember { Animatable(0f) }
+    val unfoldY = remember { Animatable(0f) }
+    val geometry = remember { UnfoldGeometry() }
+    var panelSize by remember { mutableStateOf(IntSize.Zero) }
+
     LaunchedEffect(open) {
         if (open) {
-            // The opening frame is the heaviest the menu has: every row
-            // composed and measured, the player pausing its canvas, and the
-            // still the frost blurs taken and read back. Grown from that frame,
-            // the spring — which runs on the clock — jumps across it. So the
-            // panel waits, unseen, for that frame and the still to be done;
-            // not when it is coming back from part-way out. Only a still
-            // the panel will frost with is waited for: with no glass, or the
-            // blur reduced, none is taken.
-            if (progress.value == 0f) {
+            if (unfoldX.value == 0f && unfoldY.value == 0f) {
                 withFrameNanos { }
                 withFrameNanos { }
                 (backdrop as? SnapshotBackdrop)?.takeIf {
@@ -478,17 +490,29 @@ fun <T : Any> IosMenuPopover(
                     withTimeoutOrNull(STILL_WAIT_MS) { snapshotFlow { still.hasStill }.first { it } }
                 }
             }
-            progress.animateTo(
-                1f,
-                if (reduceMotion) {
-                    tween(durationMillis = 120, easing = LinearEasing)
-                } else {
-                    // Critically damped: it settles without overshooting.
-                    spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = 600f)
-                },
-            )
+            if (reduceMotion) {
+                coroutineScope {
+                    launch { unfoldX.animateTo(1f, tween(durationMillis = 120, easing = LinearEasing)) }
+                    launch { unfoldY.animateTo(1f, tween(durationMillis = 120, easing = LinearEasing)) }
+                }
+            } else {
+                coroutineScope {
+                    launch { unfoldX.animateTo(1f, UnfoldWidthSpring) }
+                    launch { unfoldY.animateTo(1f, UnfoldHeightSpring) }
+                }
+            }
         } else {
-            progress.animateTo(0f, tween(durationMillis = if (reduceMotion) 100 else 170, easing = FastOutSlowInEasing))
+            if (reduceMotion) {
+                coroutineScope {
+                    launch { unfoldY.animateTo(0f, tween(durationMillis = 100, easing = FastOutSlowInEasing)) }
+                    launch { unfoldX.animateTo(0f, tween(durationMillis = 100, easing = FastOutSlowInEasing)) }
+                }
+            } else {
+                coroutineScope {
+                    launch { unfoldY.animateTo(0f, FoldSpring) }
+                    launch { unfoldX.animateTo(0f, FoldSpring) }
+                }
+            }
             last = null
         }
     }
@@ -503,19 +527,28 @@ fun <T : Any> IosMenuPopover(
     val insets = WindowInsets.safeDrawing
     var overlayOffset by remember { mutableStateOf(Offset.Zero) }
 
+    val currentFrame = if (panelSize.width > 0 && panelSize.height > 0) {
+        geometry.frame(unfoldX.value, unfoldY.value, Size(panelSize.width.toFloat(), panelSize.height.toFloat()))
+    } else {
+        null
+    }
+    val cornerPx = with(LocalDensity.current) { 24.dp.toPx() }
+    val currentRadius = if (currentFrame != null) {
+        geometry.radius(unfoldY.value, currentFrame, cornerPx)
+    } else {
+        cornerPx
+    }
+
     Layout(
         modifier = Modifier
             .fillMaxSize()
             .onGloballyPositioned { overlayOffset = it.positionInWindow() }
-            // Nothing under the menu moves while it is up: a drag that the
-            // rows didn't take would otherwise reach the sheet the player is
-            // in and pull the whole player down. Taps still go through.
             .containSheetGestures(),
         content = {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .graphicsLayer { alpha = progress.value.coerceIn(0f, 1f) }
+                    .graphicsLayer { alpha = unfoldY.value.coerceIn(0f, 1f) }
                     .background(scrim)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -524,44 +557,45 @@ fun <T : Any> IosMenuPopover(
                         onClick = onDismiss,
                     ),
             )
-            // The panel's shadow, cast by a plate of its own behind it: the
-            // panel is drawn into a layer of its own size (see the placement
-            // below), which would cut a shadow of its own off at its edges.
-            // Cast from a plain rounded rect: a shadow that size is a blur
-            // deep enough that the continuous corner can't be told from it,
-            // and the GPU draws a rounded rect's straight off, where a path's
-            // is a mask the size of the panel rasterized on the CPU — again
-            // at each new scale, every frame of the growth.
             Box(Modifier.iosMenuShadow(IosMenuShadowShape))
             Box(
                 Modifier
-                    // Taps between rows land on the panel, not the scrim under it.
+                    .onSizeChanged { panelSize = it }
                     .pointerInput(Unit) {}
-                    .iosMenuPanel(
-                        translucent = true,
-                        backdrop = backdrop,
-                        hazeState = hazeState,
-                        castsShadow = false,
+                    .then(
+                        if (!supportsNativeGlassMenu || reduceMotion) {
+                            Modifier.iosMenuPanel(
+                                translucent = true,
+                                backdrop = backdrop,
+                                hazeState = hazeState,
+                                castsShadow = false,
+                            )
+                        } else {
+                            Modifier
+                        }
                     ),
                 propagateMinConstraints = true,
             ) {
-                if (supportsNativeGlassMenu && !appReduceAnimation) {
+                if (supportsNativeGlassMenu && !reduceMotion) {
                     NativeGlassSurface(
                         modifier = Modifier.matchParentSize(),
-                        cornerRadius = 30.dp,
+                        cornerRadius = 24.dp,
+                        materialProgress = unfoldY.value,
+                        customFrame = currentFrame,
+                        customCornerRadiusPx = currentRadius,
                     )
                 }
-                // The rows in a layer of their own. The frost under them is
-                // drawn again on every frame of the growth — it holds the
-                // still in place while the panel scales over it — and drawn
-                // in the same layer, every label and glyph went with it, each
-                // frame at a new scale: rasterized again and uploaded again on
-                // the render thread. Apart, they are drawn once, full size,
-                // and only scaled. On a dark panel that layer is the blend's
-                // own, added onto the frost; on a light one it would wash the
-                // dark labels out, so it stays plain.
                 Column(
                     Modifier
+                        .graphicsLayer {
+                            if (!reduceMotion && currentFrame != null) {
+                                shape = UnfoldShape(currentFrame, currentRadius)
+                                clip = true
+                                alpha = ((unfoldY.value - 0.25f) / 0.75f).coerceIn(0f, 1f)
+                            } else {
+                                alpha = unfoldY.value.coerceIn(0f, 1f)
+                            }
+                        }
                         .then(
                             if (dark && !plain) {
                                 Modifier.additiveChrome(true)
@@ -596,8 +630,27 @@ fun <T : Any> IosMenuPopover(
         val hangsDown = anchorBounds != null && anchorBounds.center.y < height / 2f
         val panelY = if (hangsDown) anchorBounds.top.roundToInt().coerceIn(top, lowest) else lowest
 
-        val growth: GraphicsLayerScope.() -> Unit = {
-            val p = progress.value
+        if (anchorBounds != null) {
+            geometry.source = Rect(
+                left = (anchorBounds.left - panelX).coerceIn(0f, panel.width.toFloat()),
+                top = (anchorBounds.top - panelY).coerceIn(0f, panel.height.toFloat()),
+                right = (anchorBounds.right - panelX).coerceIn(0f, panel.width.toFloat()),
+                bottom = (anchorBounds.bottom - panelY).coerceIn(0f, panel.height.toFloat()),
+            )
+        } else {
+            geometry.source = Rect(
+                left = (panel.width - 48f).coerceAtLeast(0f),
+                top = if (hangsDown) 0f else (panel.height - 48f).coerceAtLeast(0f),
+                right = panel.width.toFloat(),
+                bottom = if (hangsDown) 48f.coerceAtMost(panel.height.toFloat()) else panel.height.toFloat(),
+            )
+        }
+
+        val shadowGrowth: GraphicsLayerScope.() -> Unit = {
+            alpha = (unfoldY.value * 2f).coerceIn(0f, 1f)
+        }
+        val fallbackGrowth: GraphicsLayerScope.() -> Unit = {
+            val p = unfoldY.value
             alpha = (p * 2.5f).coerceIn(0f, 1f)
             if (!reduceMotion) {
                 transformOrigin = TransformOrigin(1f, if (hangsDown) 0f else 1f)
@@ -608,16 +661,15 @@ fun <T : Any> IosMenuPopover(
         }
         layout(width, height) {
             scrimPlaceable.place(0, 0)
-            shadowPlate.placeWithLayer(panelX, panelY, layerBlock = growth)
-            panel.placeWithLayer(panelX, panelY) {
-                growth()
-                // Drawn full size into a layer of its own, and only that
-                // picture scaled. Scaled as it was drawn, the panel's
-                // continuous corners — a path, not a rounded rect — were
-                // rasterized again on the CPU for its clips and rim at every
-                // new scale, and uploaded again, frame after frame of the
-                // growth. At one size the masks are made once and kept.
-                compositingStrategy = CompositingStrategy.Offscreen
+            if (supportsNativeGlassMenu && !reduceMotion) {
+                shadowPlate.placeWithLayer(panelX, panelY, layerBlock = shadowGrowth)
+                panel.place(panelX, panelY)
+            } else {
+                shadowPlate.placeWithLayer(panelX, panelY, layerBlock = fallbackGrowth)
+                panel.placeWithLayer(panelX, panelY) {
+                    fallbackGrowth()
+                    compositingStrategy = CompositingStrategy.Offscreen
+                }
             }
         }
     }

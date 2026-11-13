@@ -268,6 +268,10 @@ import com.music.bitchord.ui.components.backdrop.backdrops.rememberLayerBackdrop
 import com.music.bitchord.ui.components.backdrop.backdrops.rememberSnapshotBackdrop
 import com.music.bitchord.ui.components.backdrop.backdrops.snapshotBackdropSource
 import com.music.bitchord.ui.components.isGlassSupported
+import com.music.bitchord.ui.components.CupertinoFrostedPopup
+import com.music.bitchord.ui.components.CupertinoGlassMenuItem
+import com.music.bitchord.ui.components.NativeGlassSurface
+import com.music.bitchord.ui.components.supportsNativeGlassMenu
 import com.music.bitchord.data.sources.SourceConfig
 import com.music.bitchord.data.sources.SourceKind
 import com.music.bitchord.data.sources.SourceRegistry
@@ -3985,16 +3989,17 @@ private fun BitChordApp(
                                             tint = MaterialTheme.colorScheme.onSurface,
                                         )
                                     }
-                                    DropdownMenu(
+                                    CupertinoFrostedPopup(
                                         expanded = librarySortMenuOpen,
                                         onDismissRequest = { librarySortMenuOpen = false },
                                     ) {
                                         LibrarySort.entries.forEach { option ->
-                                            DropdownMenuItem(
+                                            CupertinoGlassMenuItem(
                                                 text = { Text(option.localizedLabel()) },
                                                 trailingIcon = if (option == librarySort) {
                                                     { Icon(Icons.Rounded.Check, contentDescription = null) }
                                                 } else null,
+                                                selected = option == librarySort,
                                                 onClick = {
                                                     AppSettings.setLibrarySort(option)
                                                     librarySortMenuOpen = false
@@ -4837,20 +4842,32 @@ private fun BitChordApp(
             replay.summary?.takeUnless { it.isEmpty }?.let { summary ->
                 ModalBottomSheet(
                     onDismissRequest = { showReplayShare = false },
-                    // Straight to full height. The sheet is a picture and two
-                    // buttons, and half-open it showed the picture with both
-                    // buttons below the fold — a sheet whose only two controls
-                    // need a drag to reach.
                     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                    containerColor = MaterialTheme.colorScheme.background,
+                    shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+                    containerColor = Color.Transparent,
                 ) {
-                    ReplayShareSheet(
-                        summary = summary,
-                        holder = account?.name.orEmpty(),
-                        memberSince = replay.memberSince,
-                        page = replaySharePage,
-                        onDismiss = { showReplayShare = false },
-                    )
+                    Box(Modifier.fillMaxWidth()) {
+                        if (supportsNativeGlassMenu) {
+                            NativeGlassSurface(
+                                modifier = Modifier.matchParentSize(),
+                                topCornersOnly = true,
+                                cornerRadius = 26.dp,
+                            )
+                        } else {
+                            Box(
+                                Modifier
+                                    .matchParentSize()
+                                    .background(MaterialTheme.colorScheme.background),
+                            )
+                        }
+                        ReplayShareSheet(
+                            summary = summary,
+                            holder = account?.name.orEmpty(),
+                            memberSince = replay.memberSince,
+                            page = replaySharePage,
+                            onDismiss = { showReplayShare = false },
+                        )
+                    }
                 }
             }
         }
@@ -5253,9 +5270,25 @@ private fun BitChordApp(
             browseActions?.takeIf { browseRenameInSheet }?.let { target ->
                 ModalBottomSheet(
                     onDismissRequest = { browseActions = null },
-                    containerColor = MaterialTheme.colorScheme.background,
+                    shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+                    containerColor = Color.Transparent,
                 ) {
-                    browseMenuBody(target)
+                    Box(Modifier.fillMaxWidth()) {
+                        if (supportsNativeGlassMenu) {
+                            NativeGlassSurface(
+                                modifier = Modifier.matchParentSize(),
+                                topCornersOnly = true,
+                                cornerRadius = 26.dp,
+                            )
+                        } else {
+                            Box(
+                                Modifier
+                                    .matchParentSize()
+                                    .background(MaterialTheme.colorScheme.background),
+                            )
+                        }
+                        browseMenuBody(target)
+                    }
                 }
             }
             HeldContextMenu(

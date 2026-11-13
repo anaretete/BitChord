@@ -60,6 +60,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -134,25 +135,36 @@ fun PlaylistPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        // It reaches the top of the screen, where corners would only cut two
-        // notches out of the status bar's background.
-        shape = RectangleShape,
-        containerColor = MaterialTheme.colorScheme.background,
+        shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
+        containerColor = Color.Transparent,
         dragHandle = null,
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
-        // Back is this sheet's to carry out, below: left to M3 it closes the whole
-        // sheet from either panel, and takes the ticks with it.
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false),
     ) {
         BackHandler {
             if (creating && !startCreating) creating = false else closeAfter {}
         }
 
-        Column(
-            Modifier
-                .fillMaxSize()
-                .statusBarsPadding(),
-        ) {
+        Box(Modifier.fillMaxSize()) {
+            if (supportsNativeGlassMenu) {
+                NativeGlassSurface(
+                    modifier = Modifier.matchParentSize(),
+                    topCornersOnly = true,
+                    cornerRadius = 26.dp,
+                )
+            } else {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(MaterialTheme.colorScheme.background),
+                )
+            }
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
+            ) {
             if (creating) {
                 NewPlaylistForm(
                     // Nowhere to go back to when the sheet opened straight onto
@@ -239,6 +251,7 @@ fun PlaylistPickerSheet(
             }
         }
     }
+}
 }
 
 /**

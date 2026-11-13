@@ -231,9 +231,10 @@ fun <T : Any> HeldContextMenu(
                     Modifier
                         // Taps between rows land on the menu, not the scrim under it.
                         .pointerInput(Unit) {}
-                        // The same frosted plate the held item sits on, so the
-                        // item and its menu read as one thing lifted off the page.
-                        .iosMenuPanel(fillOverride = plate, rimOverride = hairline)
+                        .iosMenuPanel(
+                            fillOverride = if (supportsNativeGlassMenu && !reduceMotion) Color.Transparent else plate,
+                            rimOverride = hairline,
+                        )
                         .padding(vertical = 8.dp),
                 ) {
                     // Added onto the plate, on a dark one only: see [IosMenuPopover].
