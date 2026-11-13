@@ -35,7 +35,6 @@ import com.music.bitchord.ui.components.backdrop.effects.vibrancy
 import com.music.bitchord.ui.components.backdrop.highlight.Highlight
 import com.music.bitchord.ui.components.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
-import com.kyant.shapes.RoundedRectangularShape
 
 @Immutable
 data class LiquidGlassConfig(
@@ -55,10 +54,10 @@ val LocalLiquidGlassConfig = compositionLocalOf { LiquidGlassConfig() }
 val LocalLayerBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
 fun sanitizeLensShape(shape: Shape): Shape {
-    return if (shape is CornerBasedShape || shape is RoundedRectangularShape) {
+    return if (shape is CornerBasedShape) {
         shape
     } else {
-        Capsule()
+        Capsule
     }
 }
 

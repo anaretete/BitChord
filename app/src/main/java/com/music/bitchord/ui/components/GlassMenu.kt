@@ -52,12 +52,14 @@ fun NativeGlassSurface(
                 this.materialProgress = materialProgress
                 this.surfaceOpacity = surfaceOpacity
                 if (customFrame != null) {
-                    this.customFrame = android.graphics.RectF(
+                    this.setCustomFrame(
                         customFrame.left,
                         customFrame.top,
                         customFrame.right,
                         customFrame.bottom,
                     )
+                } else {
+                    this.clearCustomFrame()
                 }
                 if (customCornerRadiusPx != null) {
                     this.customCornerRadiusPx = customCornerRadiusPx
@@ -72,14 +74,14 @@ fun NativeGlassSurface(
             view.materialProgress = materialProgress
             view.surfaceOpacity = surfaceOpacity
             if (customFrame != null) {
-                view.customFrame = android.graphics.RectF(
+                view.setCustomFrame(
                     customFrame.left,
                     customFrame.top,
                     customFrame.right,
                     customFrame.bottom,
                 )
             } else {
-                view.customFrame = null
+                view.clearCustomFrame()
             }
             if (customCornerRadiusPx != null) {
                 view.customCornerRadiusPx = customCornerRadiusPx
@@ -139,15 +141,15 @@ fun GlassMenuAnchor(
     LaunchedEffect(expanded) {
         val view = anchorView ?: return@LaunchedEffect
         if (expanded) {
-            view.openMenu()
+            view.open()
         } else {
-            view.closeMenu()
+            view.close()
         }
     }
 
     DisposableEffect(Unit) {
         onDispose {
-            anchorView?.closeMenu()
+            anchorView?.close()
         }
     }
 }
