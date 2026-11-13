@@ -5,7 +5,6 @@ import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +16,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,6 +30,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -78,19 +79,30 @@ fun LiquidBottomTabs(
 
     val tabsBackdrop = rememberLayerBackdrop()
 
-    BoxWithConstraints(
-        modifier,
+    var containerWidthPx by remember { mutableFloatStateOf(0f) }
+    val density = LocalDensity.current
+    val tabWidth by remember(density, tabsCount) {
+        derivedStateOf {
+            if (containerWidthPx > 0f && tabsCount > 0) {
+                with(density) { (containerWidthPx - 8f.dp.toPx()).coerceAtLeast(0f) / tabsCount }
+            } else {
+                0f
+            }
+        }
+    }
+
+    Box(
+        modifier.onSizeChanged { containerWidthPx = it.width.toFloat() },
         contentAlignment = Alignment.CenterStart,
     ) {
-        val density = LocalDensity.current
-        val tabWidth = with(density) {
-            (constraints.maxWidth.toFloat() - 8f.dp.toPx()) / tabsCount
-        }
-
         val offsetAnimation = remember { Animatable(0f) }
         val panelOffset by remember(density) {
             derivedStateOf {
-                val fraction = (offsetAnimation.value / constraints.maxWidth).fastCoerceIn(-1f, 1f)
+                val fraction = if (containerWidthPx > 0f) {
+                    (offsetAnimation.value / containerWidthPx).fastCoerceIn(-1f, 1f)
+                } else {
+                    0f
+                }
                 with(density) {
                     4f.dp.toPx() * fraction.sign * EaseOut.transform(abs(fraction))
                 }
@@ -124,10 +136,12 @@ fun LiquidBottomTabs(
                     }
                 },
                 onDrag = { _, dragAmount ->
-                    updateValue(
-                        (targetValue + dragAmount.x / tabWidth * if (isLtr) 1f else -1f)
-                            .fastCoerceIn(0f, (tabsCount - 1).toFloat()),
-                    )
+                    if (tabWidth > 0f) {
+                        updateValue(
+                            (targetValue + dragAmount.x / tabWidth * if (isLtr) 1f else -1f)
+                                .fastCoerceIn(0f, (tabsCount - 1).toFloat()),
+                        )
+                    }
                     animationScope.launch {
                         offsetAnimation.snapTo(offsetAnimation.value + dragAmount.x)
                     }
