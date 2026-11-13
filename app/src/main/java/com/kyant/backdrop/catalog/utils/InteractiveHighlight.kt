@@ -13,9 +13,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.util.fastCoerceIn
-import com.kyant.backdrop.RuntimeShader
-import com.kyant.backdrop.asComposeShader
-import com.kyant.backdrop.isRuntimeShaderSupported
+import com.music.bitchord.ui.components.backdrop.RuntimeShader
+import com.music.bitchord.ui.components.backdrop.asComposeShader
+import com.music.bitchord.ui.components.backdrop.isRuntimeShaderSupported
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

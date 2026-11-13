@@ -34,23 +34,40 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceAtMost
 import androidx.compose.ui.util.lerp
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.rememberCanvasBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.music.bitchord.ui.components.backdrop.Backdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.LayerBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberCanvasBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.catalog.utils.InteractiveHighlight
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.effects.blur
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.effects.vibrancy
+import com.music.bitchord.ui.components.backdrop.drawBackdrop
+import com.music.bitchord.ui.components.backdrop.effects.blur
+import com.music.bitchord.ui.components.backdrop.effects.lens
+import com.music.bitchord.ui.components.backdrop.effects.vibrancy
 import com.kyant.shapes.Capsule
-import tachiyomi.presentation.core.components.material.LocalLayerBackdrop
-import tachiyomi.presentation.core.components.material.LocalLiquidGlassConfig
-import tachiyomi.presentation.core.components.material.rememberCupertinoHaptics
+import com.music.bitchord.ui.components.LocalLiquidGlassConfig
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.staticCompositionLocalOf
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tanh
+
+val LocalLayerBackdrop = staticCompositionLocalOf<LayerBackdrop?> { null }
+
+class CupertinoHaptics(private val haptic: androidx.compose.ui.hapticfeedback.HapticFeedback) {
+    fun click() {
+        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
+}
+
+@Composable
+fun rememberCupertinoHaptics(): CupertinoHaptics {
+    val haptic = LocalHapticFeedback.current
+    return remember(haptic) { CupertinoHaptics(haptic) }
+}
+
 
 @Composable
 fun LiquidIconButton(

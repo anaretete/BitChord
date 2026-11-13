@@ -33,18 +33,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberBackdrop
-import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.music.bitchord.ui.components.backdrop.Backdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.layerBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberCombinedBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.catalog.utils.DampedDragAnimation
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.effects.blur
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
+import com.music.bitchord.ui.components.backdrop.drawBackdrop
+import com.music.bitchord.ui.components.backdrop.effects.blur
+import com.music.bitchord.ui.components.backdrop.effects.lens
+import com.music.bitchord.ui.components.backdrop.highlight.Highlight
+import com.music.bitchord.ui.components.backdrop.shadow.InnerShadow
+import com.music.bitchord.ui.components.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
 import kotlinx.coroutines.flow.collectLatest
 
@@ -58,15 +58,14 @@ fun LiquidSlider(
     modifier: Modifier = Modifier,
     customAccentColor: Color? = null,
 ) {
-    val isGlass = tachiyomi.presentation.core.components.material.LocalLiquidGlassConfig.current.enabled
+    val isGlass = com.music.bitchord.ui.components.LocalLiquidGlassConfig.current.enabled
     val accentColor = customAccentColor ?: MaterialTheme.colorScheme.primary
     if (!isGlass) {
-        tachiyomi.presentation.core.components.material.SolidCupertinoSlider(
+        androidx.compose.material3.Slider(
             value = value(),
             onValueChange = onValueChange,
             modifier = modifier,
             valueRange = valueRange,
-            accentColor = accentColor,
         )
         return
     }

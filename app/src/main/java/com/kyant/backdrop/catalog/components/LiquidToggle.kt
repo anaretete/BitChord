@@ -30,19 +30,19 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.lerp
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.layerBackdrop
-import com.kyant.backdrop.backdrops.rememberBackdrop
-import com.kyant.backdrop.backdrops.rememberCanvasBackdrop
-import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
-import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.music.bitchord.ui.components.backdrop.Backdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.layerBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberCanvasBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberCombinedBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberLayerBackdrop
 import com.kyant.backdrop.catalog.utils.DampedDragAnimation
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.effects.blur
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
+import com.music.bitchord.ui.components.backdrop.drawBackdrop
+import com.music.bitchord.ui.components.backdrop.effects.blur
+import com.music.bitchord.ui.components.backdrop.effects.lens
+import com.music.bitchord.ui.components.backdrop.highlight.Highlight
+import com.music.bitchord.ui.components.backdrop.shadow.InnerShadow
+import com.music.bitchord.ui.components.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
 import kotlinx.coroutines.flow.collectLatest
 
@@ -57,8 +57,7 @@ fun LiquidToggle(
     val isLightTheme = !isSystemInDarkTheme()
     val isDark = !isLightTheme
     val defaultCupertinoGreen = if (isDark) Color(0xFF30D158) else Color(0xFF34C759)
-    val greenToggles = tachiyomi.presentation.core.components.material.LocalCupertinoGreenToggles.current
-    val accentColor = customAccentColor ?: if (greenToggles) defaultCupertinoGreen else MaterialTheme.colorScheme.primary
+    val accentColor = customAccentColor ?: defaultCupertinoGreen
     val trackColor =
         if (isLightTheme) {
             Color(0xFF787878).copy(0.2f)

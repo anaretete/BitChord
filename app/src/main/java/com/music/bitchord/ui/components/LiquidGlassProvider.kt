@@ -24,16 +24,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.backdrops.LayerBackdrop
-import com.kyant.backdrop.backdrops.rememberCanvasBackdrop
+import com.music.bitchord.ui.components.backdrop.Backdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.LayerBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberCanvasBackdrop
 import com.kyant.backdrop.catalog.utils.InteractiveHighlight
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.effects.blur
-import com.kyant.backdrop.effects.lens
-import com.kyant.backdrop.effects.vibrancy
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.Shadow
+import com.music.bitchord.ui.components.backdrop.drawBackdrop
+import com.music.bitchord.ui.components.backdrop.effects.blur
+import com.music.bitchord.ui.components.backdrop.effects.lens
+import com.music.bitchord.ui.components.backdrop.effects.vibrancy
+import com.music.bitchord.ui.components.backdrop.highlight.Highlight
+import com.music.bitchord.ui.components.backdrop.shadow.Shadow
 import com.kyant.shapes.Capsule
 import com.kyant.shapes.RoundedRectangularShape
 
