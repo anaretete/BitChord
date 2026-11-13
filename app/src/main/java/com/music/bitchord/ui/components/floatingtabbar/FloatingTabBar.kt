@@ -766,6 +766,34 @@ private fun SharedTransitionScope.ExpandedTabs(
     // The lens samples the recorded page, and "reduce dynamic blur" stops that
     // recording. There the flat pill carries the whole motion on its own.
     val glassPill = isGlassSupported() && !reduceDynamicBlur
+    val appBackdrop = LocalAppBackdrop.current
+    if (glassPill && appBackdrop != null && scope.tabs.isNotEmpty()) {
+        val currentTabs by rememberUpdatedState(scope.tabs)
+        LiquidBottomTabs(
+            selectedTabIndex = { currentSelectedTabIndex },
+            onTabSelected = { idx ->
+                if (idx != currentSelectedTabIndex) {
+                    currentTabs.getOrNull(idx)?.onClick?.invoke()
+                }
+            },
+            backdrop = appBackdrop,
+            tabsCount = scope.tabs.size,
+            accentColor = glassContentColor(),
+            modifier = modifier.sharedElement(
+                sharedContentState = rememberSharedContentState("tabGroup"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                zIndexInOverlay = 1f,
+            ),
+        ) {
+            scope.tabs.forEach { tab ->
+                LiquidBottomTab(onClick = tab.onClick) {
+                    tab.icon()
+                    tab.title()
+                }
+            }
+        }
+        return
+    }
     val barGlass = rememberLayerBackdrop()
     val tabRow = rememberLayerBackdrop()
 
