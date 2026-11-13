@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.view.doOnPreDraw
+import androidx.core.view.doOnLayout
 import expo.modules.glassmenuandroid.GlassMenuAndroidView
 import expo.modules.glassmenuandroid.GlassPanelView
 import expo.modules.glassmenuandroid.records.GlassMenuConfigRecord
@@ -160,13 +160,15 @@ fun GlassMenuAnchor(
     LaunchedEffect(expanded, anchorView) {
         val anchor = anchorView ?: return@LaunchedEffect
         if (expanded) {
-            if (anchor.width > 0 && anchor.height > 0 && anchor.isAttachedToWindow) {
+            if (anchor.isAttachedToWindow && anchor.isLaidOut && anchor.width > 0 && anchor.height > 0) {
                 anchor.post {
-                    if (!anchor.open()) currentOnDismissRequest()
+                    if (expanded && !anchor.open()) currentOnDismissRequest()
                 }
             } else {
-                anchor.doOnPreDraw {
-                    if (expanded && !anchor.open()) currentOnDismissRequest()
+                anchor.doOnLayout {
+                    anchor.post {
+                        if (expanded && !anchor.open()) currentOnDismissRequest()
+                    }
                 }
             }
         } else {

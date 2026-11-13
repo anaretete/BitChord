@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.music.bitchord.ui.haptics.Haptic
 import com.music.bitchord.ui.haptics.rememberHaptics
 
@@ -96,6 +97,23 @@ fun IosSwitch(
     LaunchedEffect(checked) {
         if (settled) haptics.play(if (checked) Haptic.ToggleOn else Haptic.ToggleOff)
         settled = true
+    }
+
+    val reduceDynamicBlur by com.music.bitchord.data.settings.AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
+    if (LocalLiquidGlassEnabled.current && isGlassSupported() && !reduceDynamicBlur) {
+        val bgColor = MaterialTheme.colorScheme.background
+        val backdrop = com.music.bitchord.ui.components.backdrop.backdrops.rememberCanvasBackdrop {
+            drawRect(bgColor)
+        }
+        com.kyant.backdrop.catalog.components.LiquidToggle(
+            selected = { checked },
+            onSelect = { value ->
+                if (enabled) onCheckedChange?.invoke(value)
+            },
+            backdrop = backdrop,
+            modifier = modifier.graphicsLayer { alpha = if (enabled) 1f else 0.45f },
+        )
+        return
     }
 
     Box(

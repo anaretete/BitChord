@@ -261,10 +261,8 @@ import com.music.bitchord.ui.components.FloatingBarsTapGuard
 import com.music.bitchord.ui.components.BottomTab
 import com.music.bitchord.ui.components.FLOATING_BAR_MAX_WIDTH
 import com.music.bitchord.ui.components.FloatingBottomBar
-import com.music.bitchord.ui.components.NAV_BAR_GUTTER
-import com.music.bitchord.ui.components.NAV_BAR_LIFT
-import com.music.bitchord.ui.components.floatingBarInsets
-import com.music.bitchord.ui.components.glassContentColor
+import com.music.bitchord.ui.components.GlassNavBar
+import com.music.bitchord.ui.components.floatingtabbar.rememberFloatingTabBarScrollConnection
 import com.music.bitchord.ui.components.FrostedTopBar
 import com.music.bitchord.ui.components.LastfmLoginAlert
 import com.music.bitchord.ui.components.LocalAppBackdrop
@@ -277,12 +275,6 @@ import com.music.bitchord.ui.components.backdrop.backdrops.snapshotBackdropSourc
 import com.music.bitchord.ui.components.isGlassSupported
 import com.music.bitchord.ui.components.NativeGlassSurface
 import com.music.bitchord.ui.components.supportsNativeGlassMenu
-import com.kyant.backdrop.catalog.components.LiquidBottomTab
-import com.kyant.backdrop.catalog.components.LiquidBottomTabs
-import com.music.bitchord.ui.haptics.Haptic
-import com.music.bitchord.ui.haptics.rememberHaptics
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.ui.text.style.TextOverflow
 import expo.modules.glassmenuandroid.records.GlassMenuItemRecord
 import com.music.bitchord.data.sources.SourceConfig
 import com.music.bitchord.data.sources.SourceKind
@@ -559,6 +551,7 @@ private fun BitChordApp(
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
     val progressiveBlur by AppSettings.progressiveBlur.collectAsStateWithLifecycle()
     val glassSamplesBackdrop = glassActive && !reduceDynamicBlur
+    val navBarScroll = rememberFloatingTabBarScrollConnection()
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     // Explore loads the first time it's shown, not at launch beside Home.
     LaunchedEffect(selectedTab) {
@@ -2909,8 +2902,16 @@ private fun BitChordApp(
                     modifier = Modifier
                         .hazeSource(hazeState)
                         .then(
-                            if (glassSamplesBackdrop) {
-                                Modifier.layerBackdrop(appBackdrop)
+                            if (glassActive) {
+                                Modifier
+                                    .then(
+                                        if (glassSamplesBackdrop) {
+                                            Modifier.layerBackdrop(appBackdrop)
+                                        } else {
+                                            Modifier
+                                        },
+                                    )
+                                    .nestedScroll(navBarScroll)
                             } else {
                                 Modifier
                             },
@@ -4161,81 +4162,38 @@ private fun BitChordApp(
                     }
                 }
 
-                if (glassActive && !reduceDynamicBlur) Column(
+                if (glassActive) Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .widthIn(max = FLOATING_BAR_MAX_WIDTH)
                         .fillMaxWidth()
                         .onSizeChanged { floatingBarsHeight.intValue = it.height },
-                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    val haptics = rememberHaptics()
                     QueueActionNoticeHost(queueNotice)
-                    player.song?.let { song ->
-                        MiniPlayer(
-                            song = song,
-                            isPlaying = player.isPlaying,
-                            isLoading = playPauseBusy,
-                            hazeState = hazeState,
-                            onPlayPause = {
-                                togglePlayPause()
-                            },
-                            onNext = { controller?.seekToNextMediaItem() },
-                            onPrevious = { controller?.seekToPrevious() },
-                            onExpand = if (reducePlayerMotion) {
-                                { showNowPlaying = true }
-                            } else {
-                                playerSheetMotion::open
-                            },
-                            controlsLocked = controlsLocked,
-                            onBlockedControl = showHostOnlyNotice,
-                            dock = activeDock,
-                            pull = playerSheetMotion.takeIf { !reducePlayerMotion },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    LiquidBottomTabs(
-                        selectedTabIndex = { selectedTab },
+                    GlassNavBar(
+                        tabs = tabs,
+                        selectedIndex = selectedTab,
                         onTabSelected = onTabSelected,
-                        backdrop = LocalAppBackdrop.current,
-                        tabsCount = tabs.size,
-                        accentColor = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .windowInsetsPadding(floatingBarInsets)
-                            .padding(horizontal = NAV_BAR_GUTTER)
-                            .padding(bottom = NAV_BAR_LIFT)
-                            .fillMaxWidth(),
-                    ) {
-                        tabs.forEachIndexed { index, tab ->
-                            val isSelected = index == selectedTab
-                            val contentColor = if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                glassContentColor().copy(alpha = 0.72f)
-                            }
-                            LiquidBottomTab(
-                                onClick = {
-                                    if (!isSelected) haptics.play(Haptic.Select)
-                                    onTabSelected(index)
-                                },
-                            ) {
-                                Icon(
-                                    imageVector = tab.icon,
-                                    contentDescription = tab.label,
-                                    tint = contentColor,
-                                    modifier = Modifier.size(22.dp),
-                                )
-                                Text(
-                                    text = tab.label,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = contentColor,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
-                    }
+                        scrollConnection = navBarScroll,
+                        song = player.song,
+                        isPlaying = player.isPlaying,
+                        isLoading = playPauseBusy,
+                        onPlayPause = {
+                            togglePlayPause()
+                        },
+                        onNext = { controller?.seekToNextMediaItem() },
+                        onPrevious = { controller?.seekToPrevious() },
+                        onExpand = if (reducePlayerMotion) {
+                            { showNowPlaying = true }
+                        } else {
+                            playerSheetMotion::open
+                        },
+                        controlsLocked = controlsLocked,
+                        onBlockedControl = showHostOnlyNotice,
+                        dock = activeDock,
+                        pull = playerSheetMotion.takeIf { !reducePlayerMotion },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 } else Column(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)

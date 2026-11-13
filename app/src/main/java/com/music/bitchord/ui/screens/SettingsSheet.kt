@@ -1,7 +1,9 @@
 package com.music.bitchord.ui.screens
 
+import com.music.bitchord.ui.components.GlassMenuAnchor
 import com.music.bitchord.ui.icons.SfIcons
 import com.music.bitchord.wear.WatchInstaller
+import expo.modules.glassmenuandroid.records.GlassMenuItemRecord
 import android.content.Context
 import androidx.annotation.StringRes
 import android.content.Intent
@@ -534,23 +536,67 @@ fun SettingsScreen(
                 }
                 val onWifiTitle = stringResource(R.string.on_wifi)
                 row(onWifiTitle, "wi-fi", "streaming quality") {
-                    SettingsRow(
-                        icon = SfIcons.Wifi,
-                        title = onWifiTitle,
-                        badge = stringResource(R.string.in_use).takeIf { metered == false },
-                        value = wifiQuality.localizedLabel(),
-                        onClick = { onOpenChoice(SettingsChoiceKind.AUDIO_QUALITY_WIFI) },
-                    )
+                    var wifiMenuOpen by remember { mutableStateOf(false) }
+                    val wifiItems = AudioQuality.entries.reversed().map { quality ->
+                        GlassMenuItemRecord(
+                            id = quality.name,
+                            title = quality.localizedLabel(),
+                            subtitle = stringResource(R.string.quality_hourly, quality.detail, quality.hourly),
+                            icon = if (quality == wifiQuality) "check" else null,
+                            checked = if (quality == wifiQuality) true else null,
+                            onClick = {
+                                AppSettings.setAudioQualityWifi(quality)
+                                wifiMenuOpen = false
+                            },
+                        )
+                    }
+                    Box {
+                        SettingsRow(
+                            icon = SfIcons.Wifi,
+                            title = onWifiTitle,
+                            badge = stringResource(R.string.in_use).takeIf { metered == false },
+                            value = wifiQuality.localizedLabel(),
+                            onClick = { wifiMenuOpen = true },
+                        )
+                        GlassMenuAnchor(
+                            expanded = wifiMenuOpen,
+                            onDismissRequest = { wifiMenuOpen = false },
+                            items = wifiItems,
+                            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
+                        )
+                    }
                 }
                 val onMobileDataTitle = stringResource(R.string.on_mobile_data)
                 row(onMobileDataTitle, "cellular", "streaming quality") {
-                    SettingsRow(
-                        icon = SfIcons.SignalCellularAlt,
-                        title = onMobileDataTitle,
-                        badge = stringResource(R.string.in_use).takeIf { metered == true },
-                        value = cellularQuality.localizedLabel(),
-                        onClick = { onOpenChoice(SettingsChoiceKind.AUDIO_QUALITY_CELLULAR) },
-                    )
+                    var cellularMenuOpen by remember { mutableStateOf(false) }
+                    val cellularItems = AudioQuality.entries.reversed().map { quality ->
+                        GlassMenuItemRecord(
+                            id = quality.name,
+                            title = quality.localizedLabel(),
+                            subtitle = stringResource(R.string.quality_hourly, quality.detail, quality.hourly),
+                            icon = if (quality == cellularQuality) "check" else null,
+                            checked = if (quality == cellularQuality) true else null,
+                            onClick = {
+                                AppSettings.setAudioQualityCellular(quality)
+                                cellularMenuOpen = false
+                            },
+                        )
+                    }
+                    Box {
+                        SettingsRow(
+                            icon = SfIcons.SignalCellularAlt,
+                            title = onMobileDataTitle,
+                            badge = stringResource(R.string.in_use).takeIf { metered == true },
+                            value = cellularQuality.localizedLabel(),
+                            onClick = { cellularMenuOpen = true },
+                        )
+                        GlassMenuAnchor(
+                            expanded = cellularMenuOpen,
+                            onDismissRequest = { cellularMenuOpen = false },
+                            items = cellularItems,
+                            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
+                        )
+                    }
                 }
                 // Sits with the quality ceilings rather than with Playback: it
                 // decides which version of a track gets fetched, the same question
@@ -609,13 +655,35 @@ fun SettingsScreen(
         if (shows(SettingsCategory.DOWNLOADS)) SearchableSettingsGroup(search, header = stringResource(R.string.downloads)) {
             val downloadQualityTitle = stringResource(R.string.download_quality)
             row(downloadQualityTitle, "offline", "lossless") {
-                SettingsRow(
-                    icon = SfIcons.Download,
-                    title = downloadQualityTitle,
-                    subtitle = stringResource(R.string.download_quality_subtitle, downloadQuality.perTrack),
-                    value = downloadQuality.localizedLabel(),
-                    onClick = { onOpenChoice(SettingsChoiceKind.DOWNLOAD_QUALITY) },
-                )
+                var dlQualityMenuOpen by remember { mutableStateOf(false) }
+                val dlQualityItems = DownloadQuality.entries.reversed().map { quality ->
+                    GlassMenuItemRecord(
+                        id = quality.name,
+                        title = quality.localizedLabel(),
+                        subtitle = stringResource(R.string.quality_per_track, quality.detail, quality.perTrack),
+                        icon = if (quality == downloadQuality) "check" else null,
+                        checked = if (quality == downloadQuality) true else null,
+                        onClick = {
+                            AppSettings.setDownloadQuality(quality)
+                            dlQualityMenuOpen = false
+                        },
+                    )
+                }
+                Box {
+                    SettingsRow(
+                        icon = SfIcons.Download,
+                        title = downloadQualityTitle,
+                        subtitle = stringResource(R.string.download_quality_subtitle, downloadQuality.perTrack),
+                        value = downloadQuality.localizedLabel(),
+                        onClick = { dlQualityMenuOpen = true },
+                    )
+                    GlassMenuAnchor(
+                        expanded = dlQualityMenuOpen,
+                        onDismissRequest = { dlQualityMenuOpen = false },
+                        items = dlQualityItems,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
+                    )
+                }
             }
             // Reads as part of Download quality above it, not as a setting
             // of its own — same treatment as Play animated cover over
@@ -687,30 +755,57 @@ fun SettingsScreen(
             }
             val bitPerfectTitle = stringResource(R.string.bit_perfect_output)
             row(bitPerfectTitle, "usb", "dac", "exclusive", "hi-res", "bitperfect") {
-                // The mode and the device it names can both be long, so they
-                // go under the title rather than beside it, where they left
-                // the title and status no room.
-                SettingsRow(
-                    icon = SfIcons.Usb,
-                    title = bitPerfectTitle,
-                    subtitleContent = {
-                        Column {
-                            Text(
-                                text = bitPerfectSubtitle(bitPerfectMode, bitPerfectStatus),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Text(
-                                text = bitPerfectMode.localizedLabel(),
-                                modifier = Modifier.padding(top = 2.dp),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    },
-                    onClick = { onOpenChoice(SettingsChoiceKind.BIT_PERFECT) },
-                )
+                var bitPerfectMenuOpen by remember { mutableStateOf(false) }
+                val bitPerfectItems = BitPerfectMode.entries.map { mode ->
+                    GlassMenuItemRecord(
+                        id = mode.name,
+                        title = mode.localizedLabel(),
+                        subtitle = mode.description(),
+                        icon = if (mode == bitPerfectMode) "check" else null,
+                        checked = if (mode == bitPerfectMode) true else null,
+                        disabled = !mode.isSupported,
+                        onClick = {
+                            bitPerfectMenuOpen = false
+                            if (mode == BitPerfectMode.OFF) {
+                                AppSettings.setBitPerfectMode(mode)
+                            } else {
+                                onConfirmBitPerfect(mode)
+                            }
+                        },
+                    )
+                }
+                Box {
+                    // The mode and the device it names can both be long, so they
+                    // go under the title rather than beside it, where they left
+                    // the title and status no room.
+                    SettingsRow(
+                        icon = SfIcons.Usb,
+                        title = bitPerfectTitle,
+                        subtitleContent = {
+                            Column {
+                                Text(
+                                    text = bitPerfectSubtitle(bitPerfectMode, bitPerfectStatus),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    text = bitPerfectMode.localizedLabel(),
+                                    modifier = Modifier.padding(top = 2.dp),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        },
+                        onClick = { bitPerfectMenuOpen = true },
+                    )
+                    GlassMenuAnchor(
+                        expanded = bitPerfectMenuOpen,
+                        onDismissRequest = { bitPerfectMenuOpen = false },
+                        items = bitPerfectItems,
+                        alignment = "right",
+                    )
+                }
             }
             // The DAC's own attenuator: the only volume direct USB has, since
             // nothing upstream may scale a sample. It and the row after it
@@ -824,14 +919,42 @@ fun SettingsScreen(
             }
             val automixPerformanceTitle = stringResource(R.string.automix_performance)
             row(automixPerformanceTitle, "cpu", "battery") {
-                BypassedByBitPerfect(bitPerfectReady) {
-                    SettingsRow(
-                        icon = SfIcons.Tune,
-                        title = automixPerformanceTitle,
-                        subtitle = stringResource(R.string.automix_performance_subtitle),
-                        value = automixPerformance.localizedLabel(),
-                        onClick = { onOpenChoice(SettingsChoiceKind.AUTOMIX_PERFORMANCE) },
+                var automixPerfMenuOpen by remember { mutableStateOf(false) }
+                val automixPerfItems = AutomixPerformanceMode.entries.map { mode ->
+                    GlassMenuItemRecord(
+                        id = mode.name,
+                        title = mode.localizedLabel(),
+                        subtitle = stringResource(
+                            when (mode) {
+                                AutomixPerformanceMode.EFFICIENT -> R.string.automix_mode_efficient_subtitle
+                                AutomixPerformanceMode.BALANCED -> R.string.automix_mode_balanced_subtitle
+                                AutomixPerformanceMode.PERFORMANCE -> R.string.automix_mode_performance_subtitle
+                            },
+                        ),
+                        icon = if (mode == automixPerformance) "check" else null,
+                        checked = if (mode == automixPerformance) true else null,
+                        onClick = {
+                            AppSettings.setAutomixPerformanceMode(mode)
+                            automixPerfMenuOpen = false
+                        },
                     )
+                }
+                BypassedByBitPerfect(bitPerfectReady) {
+                    Box {
+                        SettingsRow(
+                            icon = SfIcons.Tune,
+                            title = automixPerformanceTitle,
+                            subtitle = stringResource(R.string.automix_performance_subtitle),
+                            value = automixPerformance.localizedLabel(),
+                            onClick = { automixPerfMenuOpen = true },
+                        )
+                        GlassMenuAnchor(
+                            expanded = automixPerfMenuOpen,
+                            onDismissRequest = { automixPerfMenuOpen = false },
+                            items = automixPerfItems,
+                            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
+                        )
+                    }
                 }
             }
             val skipSilenceTitle = stringResource(R.string.skip_silence)
@@ -1011,13 +1134,35 @@ fun SettingsScreen(
             }
             val fontTitle = stringResource(R.string.font)
             row(fontTitle, "typeface", "sf pro", "legacy") {
-                SettingsRow(
-                    icon = SfIcons.Font,
-                    title = fontTitle,
-                    subtitle = appFont.description(),
-                    value = appFont.localizedLabel(),
-                    onClick = { onOpenChoice(SettingsChoiceKind.FONT) },
-                )
+                var fontMenuOpen by remember { mutableStateOf(false) }
+                val fontItems = AppFont.entries.map { font ->
+                    GlassMenuItemRecord(
+                        id = font.name,
+                        title = font.localizedLabel(),
+                        subtitle = font.description(),
+                        icon = if (font == appFont) "check" else null,
+                        checked = if (font == appFont) true else null,
+                        onClick = {
+                            AppSettings.setAppFont(font)
+                            fontMenuOpen = false
+                        },
+                    )
+                }
+                Box {
+                    SettingsRow(
+                        icon = SfIcons.Font,
+                        title = fontTitle,
+                        subtitle = appFont.description(),
+                        value = appFont.localizedLabel(),
+                        onClick = { fontMenuOpen = true },
+                    )
+                    GlassMenuAnchor(
+                        expanded = fontMenuOpen,
+                        onDismissRequest = { fontMenuOpen = false },
+                        items = fontItems,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
+                    )
+                }
             }
             val reduceAnimationTitle = stringResource(R.string.reduce_animation)
             row(reduceAnimationTitle, "motion") {

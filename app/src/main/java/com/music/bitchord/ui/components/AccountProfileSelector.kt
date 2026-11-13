@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import expo.modules.glassmenuandroid.GlassMenuItemRecord
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import com.music.bitchord.ui.icons.SfIcons
@@ -67,6 +69,90 @@ fun AccountProfileSelector(
     modifier: Modifier = Modifier,
 ) {
     var managing by remember { mutableStateOf(false) }
+    if (supportsNativeGlassMenu) {
+        val accountsFallback = stringResource(R.string.accounts)
+        val brandLabel = stringResource(R.string.brand_account)
+        val personalLabel = stringResource(R.string.personal)
+        val signOutLabel = stringResource(R.string.sign_out)
+        val addAccountLabel = stringResource(R.string.add_account)
+        val manageAccountsLabel = stringResource(R.string.manage_accounts)
+        val settingsLabel = stringResource(R.string.settings)
+        val items = buildList {
+            accounts.forEach { account ->
+                val accountHeader = account.email.ifBlank { account.name.ifBlank { accountsFallback } }
+                add(GlassMenuItemRecord(id = "hdr_${account.accountId}", title = accountHeader, heading = true))
+                account.profiles.forEach { profile ->
+                    val selected = account.accountId == activeAccountId && profile.profileId == activeProfileId
+                    val roleLabel = profile.handle.ifBlank { if (profile.isBrandAccount) brandLabel else personalLabel }
+                    add(
+                        GlassMenuItemRecord(
+                            id = "${account.accountId}_${profile.profileId}",
+                            title = profile.name,
+                            subtitle = if (managing) signOutLabel else roleLabel,
+                            icon = when {
+                                managing -> "trash"
+                                selected -> "check"
+                                else -> "person.circle"
+                            },
+                            checked = if (selected && !managing) true else null,
+                            destructive = managing,
+                            onClick = {
+                                if (managing) {
+                                    onRemoveAccount(account)
+                                } else {
+                                    onSelect(account, profile)
+                                    onDismiss()
+                                }
+                            },
+                        ),
+                    )
+                }
+            }
+            if (accounts.isNotEmpty()) {
+                add(GlassMenuItemRecord(id = "sep_actions", separator = true))
+            }
+            add(
+                GlassMenuItemRecord(
+                    id = "add_account",
+                    title = addAccountLabel,
+                    icon = "plus.circle",
+                    onClick = onAddAccount,
+                ),
+            )
+            add(
+                GlassMenuItemRecord(
+                    id = "manage_accounts",
+                    title = manageAccountsLabel,
+                    icon = if (managing) "checkmark.circle" else "person.2.circle",
+                    keepOpen = true,
+                    onClick = { managing = !managing },
+                ),
+            )
+            add(
+                GlassMenuItemRecord(
+                    id = "settings",
+                    title = settingsLabel,
+                    icon = "gearshape",
+                    onClick = onOpenSettings,
+                ),
+            )
+        }
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(top = 8.dp, end = 16.dp),
+            contentAlignment = Alignment.TopEnd,
+        ) {
+            GlassMenuAnchor(
+                expanded = true,
+                onDismissRequest = onDismiss,
+                items = items,
+                alignment = "right",
+            )
+        }
+        return
+    }
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
     val shape = MaterialTheme.shapes.extraLarge
     val surface = MaterialTheme.colorScheme.surface
