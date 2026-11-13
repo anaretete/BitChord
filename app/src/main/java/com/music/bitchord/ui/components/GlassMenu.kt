@@ -54,6 +54,7 @@ import expo.modules.glassmenuandroid.GlassMenuAndroidView
 import expo.modules.glassmenuandroid.GlassPanelView
 import expo.modules.glassmenuandroid.records.GlassMenuConfigRecord
 import expo.modules.glassmenuandroid.records.GlassMenuItemRecord
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 val supportsNativeGlassMenu: Boolean
@@ -188,10 +189,31 @@ fun <T : Any> ExpoGlassMenuHost(
     onDismiss: () -> Unit,
     items: @Composable (T) -> List<GlassMenuItemRecord>,
 ) {
-    val activeItem = item ?: return
-    val menuItems = items(activeItem)
+    var retainedItem by remember { mutableStateOf<T?>(null) }
+    var retainedAnchor by remember { mutableStateOf<Rect?>(null) }
+    var retainedMenuItems by remember { mutableStateOf<List<GlassMenuItemRecord>>(emptyList()) }
+
+    if (item != null) {
+        retainedItem = item
+        retainedAnchor = anchor
+        retainedMenuItems = items(item)
+    }
+
+    LaunchedEffect(item) {
+        if (item == null && retainedItem != null) {
+            delay(240L)
+            retainedItem = null
+            retainedAnchor = null
+            retainedMenuItems = emptyList()
+        }
+    }
+
+    val activeItem = item ?: retainedItem ?: return
+    val activeAnchor = if (item != null) anchor else retainedAnchor
+    val menuItems = if (item != null) items(activeItem) else retainedMenuItems
     if (menuItems.isEmpty()) return
 
+    val isExpanded = item != null
     var rootOffset by remember { mutableStateOf(Offset.Zero) }
     var rootMeasured by remember { mutableStateOf(false) }
     val density = LocalDensity.current
@@ -204,21 +226,21 @@ fun <T : Any> ExpoGlassMenuHost(
                 rootMeasured = true
             },
     ) {
-        if (anchor != null) {
-            val widthDp = with(density) { anchor.width.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
-            val heightDp = with(density) { anchor.height.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
+        if (activeAnchor != null) {
+            val widthDp = with(density) { activeAnchor.width.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
+            val heightDp = with(density) { activeAnchor.height.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
             Box(
                 modifier = Modifier
                     .offset {
                         IntOffset(
-                            (anchor.left - rootOffset.x).roundToInt(),
-                            (anchor.top - rootOffset.y).roundToInt(),
+                            (activeAnchor.left - rootOffset.x).roundToInt(),
+                            (activeAnchor.top - rootOffset.y).roundToInt(),
                         )
                     }
                     .size(width = widthDp, height = heightDp),
             ) {
                 GlassMenuAnchor(
-                    expanded = rootMeasured,
+                    expanded = isExpanded && rootMeasured,
                     onDismissRequest = onDismiss,
                     items = menuItems,
                     modifier = Modifier.matchParentSize(),
@@ -231,7 +253,7 @@ fun <T : Any> ExpoGlassMenuHost(
                     .size(40.dp),
             ) {
                 GlassMenuAnchor(
-                    expanded = true,
+                    expanded = isExpanded,
                     onDismissRequest = onDismiss,
                     items = menuItems,
                     modifier = Modifier.matchParentSize(),

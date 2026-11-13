@@ -49,12 +49,24 @@ internal fun SongInfoDialog(song: Song, onDismiss: () -> Unit) {
     val onSurface = MaterialTheme.colorScheme.onSurface
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(
+        Box(
             Modifier
                 .width(ALERT_WIDTH)
-                .clip(RoundedCornerShape(ALERT_CORNER))
-                .background(MaterialTheme.colorScheme.surface),
+                .clip(RoundedCornerShape(ALERT_CORNER)),
         ) {
+            if (supportsNativeGlassMenu) {
+                NativeGlassSurface(
+                    modifier = Modifier.matchParentSize(),
+                    cornerRadius = ALERT_CORNER,
+                )
+            } else {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(MaterialTheme.colorScheme.surface),
+                )
+            }
+            Column(Modifier.fillMaxWidth()) {
             Column(
                 Modifier
                     .fillMaxWidth()
@@ -125,6 +137,7 @@ internal fun SongInfoDialog(song: Song, onDismiss: () -> Unit) {
                 AlertRule()
             }
             AlertAction(label = stringResource(R.string.done), emphasised = true, onClick = onDismiss)
+        }
         }
     }
 }

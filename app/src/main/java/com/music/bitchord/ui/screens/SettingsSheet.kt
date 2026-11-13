@@ -1,10 +1,12 @@
 package com.music.bitchord.ui.screens
 
 import com.music.bitchord.ui.components.GlassMenuAnchor
+import com.music.bitchord.ui.components.SUPPORTED_LANGUAGES
 import com.music.bitchord.ui.icons.SfIcons
 import com.music.bitchord.wear.WatchInstaller
 import expo.modules.glassmenuandroid.records.GlassMenuItemRecord
 import android.content.Context
+import androidx.core.os.LocaleListCompat
 import androidx.annotation.StringRes
 import android.content.Intent
 import android.media.AudioFormat
@@ -1914,14 +1916,40 @@ fun SettingsScreen(
         if (shows(SettingsCategory.LANGUAGE)) SearchableSettingsGroup(search, header = stringResource(R.string.language)) {
             val appLanguageTitle = stringResource(R.string.app_language)
             row(appLanguageTitle, "locale", "translate") {
-                val selectedLanguage = AppCompatDelegate.getApplicationLocales().get(0)?.toLanguageTag()
-                    ?: Locale.getDefault().toLanguageTag()
-                SettingsRow(
-                    icon = SfIcons.Language,
-                    title = appLanguageTitle,
-                    subtitle = stringResource(languageDisplayNameRes(selectedLanguage)),
-                    onClick = onAppLanguage,
+                val selectedLanguage = com.music.bitchord.data.LocaleTags.normalizeAppTag(
+                    AppCompatDelegate.getApplicationLocales().get(0)?.toLanguageTag()
+                        ?: Locale.getDefault().toLanguageTag(),
                 )
+                var languageMenuOpen by remember { mutableStateOf(false) }
+                val languageItems = SUPPORTED_LANGUAGES.map { language ->
+                    val isSelected = com.music.bitchord.data.LocaleTags.normalizeAppTag(language.tag) == selectedLanguage
+                    GlassMenuItemRecord(
+                        id = language.tag,
+                        title = stringResource(language.nameRes),
+                        icon = if (isSelected) "check" else null,
+                        checked = if (isSelected) true else null,
+                        onClick = {
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.forLanguageTags(language.tag),
+                            )
+                            languageMenuOpen = false
+                        },
+                    )
+                }
+                Box {
+                    SettingsRow(
+                        icon = SfIcons.Language,
+                        title = appLanguageTitle,
+                        subtitle = stringResource(languageDisplayNameRes(selectedLanguage)),
+                        onClick = { languageMenuOpen = true },
+                    )
+                    GlassMenuAnchor(
+                        expanded = languageMenuOpen,
+                        onDismissRequest = { languageMenuOpen = false },
+                        items = languageItems,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
+                    )
+                }
             }
         }
 

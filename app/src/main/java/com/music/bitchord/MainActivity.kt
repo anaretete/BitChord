@@ -5538,8 +5538,18 @@ private fun BitChordApp(
             )
         }
 
+        var accountSelectorMounted by remember { mutableStateOf(showAccountSelector) }
         if (showAccountSelector) {
-            BackHandler { showAccountSelector = false }
+            accountSelectorMounted = true
+        }
+        LaunchedEffect(showAccountSelector) {
+            if (!showAccountSelector && accountSelectorMounted) {
+                delay(240L)
+                accountSelectorMounted = false
+            }
+        }
+        if (accountSelectorMounted) {
+            BackHandler(enabled = showAccountSelector) { showAccountSelector = false }
             AccountProfileSelector(
                 accounts = googleAccounts,
                 activeAccountId = activeAccountId,
@@ -5559,6 +5569,7 @@ private fun BitChordApp(
                     navigator.push(AppRoute.Settings)
                 },
                 onDismiss = { showAccountSelector = false },
+                expanded = showAccountSelector,
             )
         }
 

@@ -67,6 +67,7 @@ fun AccountProfileSelector(
     onOpenSettings: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    expanded: Boolean = true,
 ) {
     var managing by remember { mutableStateOf(false) }
     if (supportsNativeGlassMenu) {
@@ -145,7 +146,7 @@ fun AccountProfileSelector(
             contentAlignment = Alignment.TopEnd,
         ) {
             GlassMenuAnchor(
-                expanded = true,
+                expanded = expanded,
                 onDismissRequest = onDismiss,
                 items = items,
                 alignment = "right",
