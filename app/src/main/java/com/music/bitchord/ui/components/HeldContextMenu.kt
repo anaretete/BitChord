@@ -220,18 +220,26 @@ fun <T : Any> HeldContextMenu(
                     )
                 }
             }
-            Column(
-                Modifier
-                    // Taps between rows land on the menu, not the scrim under it.
-                    .pointerInput(Unit) {}
-                    // The same frosted plate the held item sits on, so the
-                    // item and its menu read as one thing lifted off the page.
-                    .iosMenuPanel(fillOverride = plate, rimOverride = hairline)
-                    .padding(vertical = 8.dp),
-            ) {
-                // Added onto the plate, on a dark one only: see [IosMenuPopover].
-                Column(Modifier.additiveChrome(dark && !plain)) {
-                    actions(menuItem)
+            Box {
+                if (supportsNativeGlassMenu && !reduceMotion) {
+                    NativeGlassSurface(
+                        modifier = Modifier.matchParentSize(),
+                        cornerRadius = 30.dp,
+                    )
+                }
+                Column(
+                    Modifier
+                        // Taps between rows land on the menu, not the scrim under it.
+                        .pointerInput(Unit) {}
+                        // The same frosted plate the held item sits on, so the
+                        // item and its menu read as one thing lifted off the page.
+                        .iosMenuPanel(fillOverride = plate, rimOverride = hairline)
+                        .padding(vertical = 8.dp),
+                ) {
+                    // Added onto the plate, on a dark one only: see [IosMenuPopover].
+                    Column(Modifier.additiveChrome(dark && !plain)) {
+                        actions(menuItem)
+                    }
                 }
             }
         },

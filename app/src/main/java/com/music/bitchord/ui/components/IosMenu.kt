@@ -176,9 +176,12 @@ fun Modifier.iosMenuPanel(
     val reduceDynamicBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
     val plain by AppSettings.disableBlendEffects.collectAsStateWithLifecycle()
     val blurs = translucent && !reduceDynamicBlur
-    val backdropFrost = blurs && backdrop != null && isGlassSupported()
-    val hazeFrost = blurs && !backdropFrost && hazeState != null
-    val fill = fillOverride ?: if (backdropFrost || hazeFrost) {
+    val nativeGlass = blurs && supportsNativeGlassMenu
+    val backdropFrost = blurs && !nativeGlass && backdrop != null && isGlassSupported()
+    val hazeFrost = blurs && !nativeGlass && !backdropFrost && hazeState != null
+    val fill = fillOverride ?: if (nativeGlass) {
+        colors.fill.copy(alpha = if (!colors.dark) 0.35f else 0.40f)
+    } else if (backdropFrost || hazeFrost) {
         // Thinner on a dark panel while its rows are blended, which takes them
         // further into the colour behind; plain rows want the denser slab back.
         colors.fill.copy(alpha = if (!colors.dark) 0.72f else if (plain) 0.80f else 0.60f)
@@ -186,7 +189,9 @@ fun Modifier.iosMenuPanel(
         colors.fill
     }
     val shadowed = if (castsShadow) iosMenuShadow() else this
-    val surface = if (hazeFrost) {
+    val surface = if (nativeGlass) {
+        shadowed.clip(IosMenuShape).background(fill)
+    } else if (hazeFrost) {
         val style = remember(colors, fill) { menuFrost(colors.fill, alpha = fill.alpha) }
         shadowed.clip(IosMenuShape).optimizedHazeEffect(state = hazeState, style = style)
     } else if (backdropFrost) {
@@ -540,6 +545,12 @@ fun <T : Any> IosMenuPopover(
                     ),
                 propagateMinConstraints = true,
             ) {
+                if (supportsNativeGlassMenu && !appReduceAnimation) {
+                    NativeGlassSurface(
+                        modifier = Modifier.matchParentSize(),
+                        cornerRadius = 30.dp,
+                    )
+                }
                 // The rows in a layer of their own. The frost under them is
                 // drawn again on every frame of the growth — it holds the
                 // still in place while the panel scales over it — and drawn
