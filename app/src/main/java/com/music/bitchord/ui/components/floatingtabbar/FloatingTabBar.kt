@@ -787,30 +787,8 @@ private fun SharedTransitionScope.ExpandedTabs(
         ) {
             scope.tabs.forEach { tab ->
                 LiquidBottomTab(onClick = tab.onClick) {
-                    Box(
-                        modifier = if (tab.key == inlineTab?.key) {
-                            Modifier.sharedElement(
-                                sharedContentState = rememberSharedContentState("tab#${tab.key}-icon"),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                zIndexInOverlay = 1f,
-                            )
-                        } else {
-                            Modifier.animateEnterExitTab(
-                                sharedTransitionScope = this@ExpandedTabs,
-                                animatedVisibilityScope = animatedVisibilityScope,
-                            )
-                        },
-                    ) {
-                        tab.icon()
-                    }
-                    Box(
-                        Modifier.animateEnterExitTab(
-                            sharedTransitionScope = this@ExpandedTabs,
-                            animatedVisibilityScope = animatedVisibilityScope,
-                        ),
-                    ) {
-                        tab.title()
-                    }
+                    tab.icon()
+                    tab.title()
                 }
             }
         }
