@@ -88,10 +88,10 @@ internal object GlassIcons {
     }
     "radio" -> Path().apply {
       addCircle(12f, 12f, 2f, Path.Direction.CW)
-      addArc(RectF(7f, 7f, 17f, 17f), -45f, 90f, false)
-      addArc(RectF(7f, 7f, 17f, 17f), 135f, 90f, false)
-      addArc(RectF(3.5f, 3.5f, 20.5f, 20.5f), -45f, 90f, false)
-      addArc(RectF(3.5f, 3.5f, 20.5f, 20.5f), 135f, 90f, false)
+      addArc(RectF(7f, 7f, 17f, 17f), -45f, 90f)
+      addArc(RectF(7f, 7f, 17f, 17f), 135f, 90f)
+      addArc(RectF(3.5f, 3.5f, 20.5f, 20.5f), -45f, 90f)
+      addArc(RectF(3.5f, 3.5f, 20.5f, 20.5f), 135f, 90f)
     }
     "pin" -> Path().apply {
       moveTo(15f, 4f); lineTo(20f, 9f); lineTo(17.5f, 11.5f); lineTo(15.5f, 14.5f); lineTo(9.5f, 8.5f); lineTo(12.5f, 6.5f); close()
@@ -131,7 +131,7 @@ internal object GlassIcons {
       moveTo(16f, 10f); lineTo(20.5f, 7.5f); lineTo(20.5f, 16.5f); lineTo(16f, 14f); close()
     }
     "history" -> Path().apply {
-      addArc(RectF(4f, 4f, 20f, 20f), -135f, 290f, false)
+      addArc(RectF(4f, 4f, 20f, 20f), -135f, 290f)
       moveTo(4.5f, 5f); lineTo(4.5f, 9f); lineTo(8.5f, 9f)
       moveTo(12f, 8f); lineTo(12f, 12.5f); lineTo(15f, 14.5f)
     }

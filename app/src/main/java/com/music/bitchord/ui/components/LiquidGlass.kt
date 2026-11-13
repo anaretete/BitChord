@@ -255,3 +255,17 @@ fun Modifier.liquidGlass(
         backdropScale = resolutionScale,
     )
 }
+
+fun Modifier.menuBackdropFrost(
+    backdrop: Backdrop,
+    shape: androidx.compose.ui.graphics.Shape,
+    fill: Color,
+): Modifier = drawBackdrop(
+    backdrop = backdrop,
+    shape = { shape },
+    effects = {
+        blur(24f.dp.toPx())
+    },
+    onDrawSurface = { drawRect(color = fill, size = size) },
+)
+
