@@ -68,6 +68,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
@@ -527,12 +528,13 @@ fun <T : Any> IosMenuPopover(
     val insets = WindowInsets.safeDrawing
     var overlayOffset by remember { mutableStateOf(Offset.Zero) }
 
+    val density = LocalDensity.current
+    val cornerPx = with(density) { 24.dp.toPx() }
     val currentFrame = if (panelSize.width > 0 && panelSize.height > 0) {
         geometry.frame(unfoldX.value, unfoldY.value, Size(panelSize.width.toFloat(), panelSize.height.toFloat()))
     } else {
         null
     }
-    val cornerPx = with(LocalDensity.current) { 24.dp.toPx() }
     val currentRadius = if (currentFrame != null) {
         geometry.radius(unfoldY.value, currentFrame, cornerPx)
     } else {
