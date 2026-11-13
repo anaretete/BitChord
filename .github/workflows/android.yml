@@ -3,7 +3,12 @@ name: Android Release APK
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-prod-release:
@@ -26,13 +31,23 @@ jobs:
         echo "LASTFM_SECRET=${{ secrets.LASTFM_SECRET }}" >> local.properties
         echo "LISTEN_TOGETHER_SERVER=${{ secrets.LISTEN_TOGETHER_SERVER }}" >> local.properties
 
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > bitchord-release.jks
-        {
-          echo "storeFile=bitchord-release.jks"
-          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}"
-          echo "keyAlias=${{ secrets.KEY_ALIAS }}"
-          echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
-        } > keystore.properties
+        if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > bitchord-release.jks
+          {
+            echo "storeFile=bitchord-release.jks"
+            echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}"
+            echo "keyAlias=${{ secrets.KEY_ALIAS }}"
+            echo "keyPassword=${{ secrets.KEY_PASSWORD }}"
+          } > keystore.properties
+        else
+          keytool -genkeypair -v -keystore bitchord-release.jks -alias bitchord -keyalg RSA -keysize 2048 -validity 10000 -storepass bitchord -keypass bitchord -dname "CN=BitChord, OU=BitChord, O=BitChord, L=Unknown, ST=Unknown, C=US"
+          {
+            echo "storeFile=bitchord-release.jks"
+            echo "storePassword=bitchord"
+            echo "keyAlias=bitchord"
+            echo "keyPassword=bitchord"
+          } > keystore.properties
+        fi
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
@@ -54,3 +69,16 @@ jobs:
       with:
         name: bitchord-wear-prod-release-signed
         path: wearos/build/outputs/apk/prod/release/*.apk
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        name: BitChord ${{ github.ref_name }}
+        fail_on_unmatched_files: false
+        files: |
+          app/build/outputs/apk/prod/release/*.apk
+          wearos/build/outputs/apk/prod/release/*.apk
+          tv/build/outputs/apk/prod/release/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
