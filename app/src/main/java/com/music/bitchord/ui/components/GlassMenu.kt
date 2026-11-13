@@ -115,6 +115,8 @@ fun GlassMenuAnchor(
     items: List<GlassMenuItemRecord>,
     modifier: Modifier = Modifier,
     alignment: String = "auto",
+    glass: Boolean = false,
+    cornerRadius: Float? = null,
 ) {
     val isDark = isSystemInDarkTheme()
     val currentOnDismissRequest by rememberUpdatedState(onDismissRequest)
@@ -136,7 +138,8 @@ fun GlassMenuAnchor(
         modifier = modifier.defaultMinSize(minWidth = 24.dp, minHeight = 24.dp),
         factory = { context ->
             GlassMenuAndroidView(context).apply {
-                glass = false
+                this.glass = glass
+                this.cornerRadius = cornerRadius
                 this.config = menuConfig
                 this.alignment = alignment
                 colorScheme = if (isDark) "dark" else "light"
@@ -149,7 +152,8 @@ fun GlassMenuAnchor(
             }
         },
         update = { view ->
-            view.glass = false
+            view.glass = glass
+            view.cornerRadius = cornerRadius
             if (view.config != menuConfig) view.config = menuConfig
             view.alignment = alignment
             view.colorScheme = if (isDark) "dark" else "light"

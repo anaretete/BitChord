@@ -3993,6 +3993,7 @@ private fun BitChordApp(
                                         onDismissRequest = { librarySortMenuOpen = false },
                                         items = sortMenuItems,
                                         modifier = Modifier.matchParentSize(),
+                                        glass = true,
                                     )
                                     IconButton(onClick = { librarySortMenuOpen = true }) {
                                         Icon(
