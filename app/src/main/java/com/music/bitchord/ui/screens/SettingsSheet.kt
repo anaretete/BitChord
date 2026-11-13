@@ -803,6 +803,7 @@ fun SettingsScreen(
                         expanded = bitPerfectMenuOpen,
                         onDismissRequest = { bitPerfectMenuOpen = false },
                         items = bitPerfectItems,
+                        modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
                         alignment = "right",
                     )
                 }

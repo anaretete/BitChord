@@ -112,11 +112,15 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kyant.backdrop.catalog.components.LiquidBottomTab
+import com.kyant.backdrop.catalog.components.LiquidBottomTabs
 import com.music.bitchord.data.settings.AppSettings
 import com.music.bitchord.ui.components.GlassSpring
+import com.music.bitchord.ui.components.LocalAppBackdrop
 import com.music.bitchord.ui.components.LocalGlassExport
 import com.music.bitchord.ui.components.backdrop.backdrops.layerBackdrop
 import com.music.bitchord.ui.components.backdrop.backdrops.rememberLayerBackdrop
+import com.music.bitchord.ui.components.glassContentColor
 import com.music.bitchord.ui.components.isGlassSupported
 import com.music.bitchord.ui.haptics.Haptic
 import com.music.bitchord.ui.haptics.rememberHaptics
@@ -762,6 +766,56 @@ private fun SharedTransitionScope.ExpandedTabs(
     // The lens samples the recorded page, and "reduce dynamic blur" stops that
     // recording. There the flat pill carries the whole motion on its own.
     val glassPill = isGlassSupported() && !reduceDynamicBlur
+    val appBackdrop = LocalAppBackdrop.current
+    if (glassPill && appBackdrop != null && scope.tabs.isNotEmpty()) {
+        val currentTabs by rememberUpdatedState(scope.tabs)
+        LiquidBottomTabs(
+            selectedTabIndex = { currentSelectedTabIndex },
+            onTabSelected = { idx ->
+                if (idx != currentSelectedTabIndex) {
+                    currentTabs.getOrNull(idx)?.onClick?.invoke()
+                }
+            },
+            backdrop = appBackdrop,
+            tabsCount = scope.tabs.size,
+            accentColor = glassContentColor(),
+            modifier = modifier.sharedElement(
+                sharedContentState = rememberSharedContentState("tabGroup"),
+                animatedVisibilityScope = animatedVisibilityScope,
+                zIndexInOverlay = 1f,
+            ),
+        ) {
+            scope.tabs.forEach { tab ->
+                LiquidBottomTab(onClick = tab.onClick) {
+                    Box(
+                        modifier = if (tab.key == inlineTab?.key) {
+                            Modifier.sharedElement(
+                                sharedContentState = rememberSharedContentState("tab#${tab.key}-icon"),
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                zIndexInOverlay = 1f,
+                            )
+                        } else {
+                            Modifier.animateEnterExitTab(
+                                sharedTransitionScope = this@ExpandedTabs,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                            )
+                        },
+                    ) {
+                        tab.icon()
+                    }
+                    Box(
+                        Modifier.animateEnterExitTab(
+                            sharedTransitionScope = this@ExpandedTabs,
+                            animatedVisibilityScope = animatedVisibilityScope,
+                        ),
+                    ) {
+                        tab.title()
+                    }
+                }
+            }
+        }
+        return
+    }
     val barGlass = rememberLayerBackdrop()
     val tabRow = rememberLayerBackdrop()
 

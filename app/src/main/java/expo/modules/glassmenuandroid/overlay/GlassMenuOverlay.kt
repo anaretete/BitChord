@@ -61,6 +61,7 @@ internal class GlassMenuOverlay private constructor(
 
   fun register(anchor: GlassMenuAndroidView) {
     if (anchor !in anchors) anchors.add(anchor)
+    if (parent === root) bringToFront()
     invalidate()
   }
 
@@ -419,9 +420,13 @@ internal class GlassMenuOverlay private constructor(
 
     fun obtain(root: ViewGroup): GlassMenuOverlay = overlays.getOrPut(root) {
       GlassMenuOverlay(root.context, root).also { overlay ->
+        val z = 1000f * root.resources.displayMetrics.density
+        overlay.elevation = z
+        overlay.translationZ = z
         root.post {
           if (overlay.parent == null && overlay.anchors.isNotEmpty()) {
             root.addView(overlay, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+            overlay.bringToFront()
           }
         }
       }

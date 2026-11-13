@@ -193,12 +193,16 @@ fun <T : Any> ExpoGlassMenuHost(
     if (menuItems.isEmpty()) return
 
     var rootOffset by remember { mutableStateOf(Offset.Zero) }
+    var rootMeasured by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .onGloballyPositioned { rootOffset = it.positionInWindow() },
+            .onGloballyPositioned {
+                rootOffset = it.positionInWindow()
+                rootMeasured = true
+            },
     ) {
         if (anchor != null) {
             val widthDp = with(density) { anchor.width.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
@@ -214,7 +218,7 @@ fun <T : Any> ExpoGlassMenuHost(
                     .size(width = widthDp, height = heightDp),
             ) {
                 GlassMenuAnchor(
-                    expanded = true,
+                    expanded = rootMeasured,
                     onDismissRequest = onDismiss,
                     items = menuItems,
                     modifier = Modifier.matchParentSize(),
