@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -353,8 +355,10 @@ fun ListenTogetherScreen(
             sheetState = sheetState,
             shape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp),
             containerColor = Color.Transparent,
+            dragHandle = null,
+            contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         ) {
-            Box(Modifier.fillMaxWidth()) {
+            Box(Modifier.fillMaxWidth().navigationBarsPadding()) {
                 if (supportsNativeGlassMenu) {
                     NativeGlassSurface(
                         modifier = Modifier.matchParentSize(),

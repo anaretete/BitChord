@@ -62,6 +62,85 @@ internal object GlassIcons {
       addCircle(12f, 12f, 8.5f, Path.Direction.CW)
       moveTo(12f, 7f); lineTo(12f, 12f); lineTo(15.5f, 14f)
     }
+    "play" -> Path().apply {
+      moveTo(6.5f, 4.5f); lineTo(19.5f, 12f); lineTo(6.5f, 19.5f); close()
+    }
+    "shuffle" -> Path().apply {
+      moveTo(3.5f, 7f); lineTo(8.5f, 7f); lineTo(15.5f, 17f); lineTo(20.5f, 17f)
+      moveTo(18f, 14.5f); lineTo(20.5f, 17f); lineTo(18f, 19.5f)
+      moveTo(3.5f, 17f); lineTo(8.5f, 17f); lineTo(11f, 13.5f)
+      moveTo(13f, 10.5f); lineTo(15.5f, 7f); lineTo(20.5f, 7f)
+      moveTo(18f, 4.5f); lineTo(20.5f, 7f); lineTo(18f, 9.5f)
+    }
+    "download" -> Path().apply {
+      moveTo(12f, 4f); lineTo(12f, 15.5f)
+      moveTo(7.5f, 11f); lineTo(12f, 15.5f); lineTo(16.5f, 11f)
+      moveTo(5f, 19.5f); lineTo(19f, 19.5f)
+    }
+    "downloaded" -> Path().apply {
+      addCircle(12f, 12f, 8.5f, Path.Direction.CW)
+      moveTo(8f, 12.2f); lineTo(10.8f, 15f); lineTo(16.2f, 9.2f)
+    }
+    "upload" -> Path().apply {
+      moveTo(12f, 16f); lineTo(12f, 4.5f)
+      moveTo(7.5f, 9f); lineTo(12f, 4.5f); lineTo(16.5f, 9f)
+      moveTo(5f, 19.5f); lineTo(19f, 19.5f)
+    }
+    "radio" -> Path().apply {
+      addCircle(12f, 12f, 2f, Path.Direction.CW)
+      addArc(RectF(7f, 7f, 17f, 17f), -45f, 90f, false)
+      addArc(RectF(7f, 7f, 17f, 17f), 135f, 90f, false)
+      addArc(RectF(3.5f, 3.5f, 20.5f, 20.5f), -45f, 90f, false)
+      addArc(RectF(3.5f, 3.5f, 20.5f, 20.5f), 135f, 90f, false)
+    }
+    "pin" -> Path().apply {
+      moveTo(15f, 4f); lineTo(20f, 9f); lineTo(17.5f, 11.5f); lineTo(15.5f, 14.5f); lineTo(9.5f, 8.5f); lineTo(12.5f, 6.5f); close()
+      moveTo(12.5f, 11.5f); lineTo(5f, 19f)
+    }
+    "info" -> Path().apply {
+      addCircle(12f, 12f, 8.5f, Path.Direction.CW)
+      moveTo(12f, 11f); lineTo(12f, 16.5f)
+      addCircle(12f, 8f, .4f, Path.Direction.CW)
+    }
+    "album" -> Path().apply {
+      addCircle(12f, 12f, 8.5f, Path.Direction.CW)
+      addCircle(12f, 12f, 2.3f, Path.Direction.CW)
+    }
+    "artist" -> Path().apply {
+      addCircle(12f, 8f, 3.5f, Path.Direction.CW)
+      moveTo(5f, 19.5f); quadTo(5f, 14.5f, 12f, 14.5f); quadTo(19f, 14.5f, 19f, 19.5f)
+    }
+    "sliders" -> Path().apply {
+      moveTo(4f, 7f); lineTo(20f, 7f); addCircle(9f, 7f, 1.8f, Path.Direction.CW)
+      moveTo(4f, 12f); lineTo(20f, 12f); addCircle(15f, 12f, 1.8f, Path.Direction.CW)
+      moveTo(4f, 17f); lineTo(20f, 17f); addCircle(10f, 17f, 1.8f, Path.Direction.CW)
+    }
+    "bug" -> Path().apply {
+      addRoundRect(RectF(7.5f, 7.5f, 16.5f, 18.5f), 4.5f, 4.5f, Path.Direction.CW)
+      moveTo(4.5f, 10f); lineTo(7.5f, 11.5f); moveTo(19.5f, 10f); lineTo(16.5f, 11.5f)
+      moveTo(4f, 14.5f); lineTo(7.5f, 14.5f); moveTo(20f, 14.5f); lineTo(16.5f, 14.5f)
+      moveTo(9.5f, 5f); lineTo(11f, 7.5f); moveTo(14.5f, 5f); lineTo(13f, 7.5f)
+    }
+    "music" -> Path().apply {
+      addCircle(7.5f, 17.5f, 2.5f, Path.Direction.CW)
+      addCircle(16.5f, 15.5f, 2.5f, Path.Direction.CW)
+      moveTo(10f, 17.5f); lineTo(10f, 6.5f); lineTo(19f, 4.5f); lineTo(19f, 15.5f)
+    }
+    "video" -> Path().apply {
+      addRoundRect(RectF(3.5f, 6.5f, 16f, 17.5f), 2f, 2f, Path.Direction.CW)
+      moveTo(16f, 10f); lineTo(20.5f, 7.5f); lineTo(20.5f, 16.5f); lineTo(16f, 14f); close()
+    }
+    "history" -> Path().apply {
+      addArc(RectF(4f, 4f, 20f, 20f), -135f, 290f, false)
+      moveTo(4.5f, 5f); lineTo(4.5f, 9f); lineTo(8.5f, 9f)
+      moveTo(12f, 8f); lineTo(12f, 12.5f); lineTo(15f, 14.5f)
+    }
+    "dislike" -> Path().apply {
+      moveTo(4f, 5f); lineTo(20f, 19f)
+      moveTo(12f, 20f)
+      cubicTo(5f, 15f, 3f, 11.5f, 3f, 8.6f); cubicTo(3f, 6f, 5f, 4.2f, 7.4f, 4.2f); cubicTo(9.3f, 4.2f, 11f, 5.3f, 12f, 7f)
+      cubicTo(13f, 5.3f, 14.7f, 4.2f, 16.6f, 4.2f); cubicTo(19f, 4.2f, 21f, 6f, 21f, 8.6f); cubicTo(21f, 11.5f, 19f, 15f, 12f, 20f)
+    }
     else -> null
   }
 }
