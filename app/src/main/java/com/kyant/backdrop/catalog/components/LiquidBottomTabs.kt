@@ -114,7 +114,7 @@ fun LiquidBottomTabs(
                 valueRange = 0f..(tabsCount - 1).coerceAtLeast(0).toFloat(),
                 visibilityThreshold = 0.001f,
                 initialScale = 1f,
-                pressedScale = 1.10f,
+                pressedScale = 78f / 56f,
                 onDragStarted = {},
                 onDragStopped = {
                     val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, tabsCount - 1)
@@ -180,7 +180,7 @@ fun LiquidBottomTabs(
                     },
                     layerBlock = {
                         val progress = dampedDragAnimation.pressProgress
-                        val scale = lerp(1f, 1f + 4f.dp.toPx() / size.width.coerceAtLeast(1f), progress)
+                        val scale = lerp(1f, 1f + 16f.dp.toPx() / size.width.coerceAtLeast(1f), progress)
                         scaleX = scale
                         scaleY = scale
                     },

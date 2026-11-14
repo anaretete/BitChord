@@ -1,6 +1,9 @@
 package com.music.bitchord.ui.components
 
 import android.os.Build
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -41,7 +44,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -248,6 +253,7 @@ fun <T : Any> ExpoGlassMenuHost(
                     onDismissRequest = onDismiss,
                     items = menuItems,
                     modifier = Modifier.matchParentSize(),
+                    glass = true,
                 )
             }
         } else {
@@ -265,6 +271,81 @@ fun <T : Any> ExpoGlassMenuHost(
             }
         }
     }
+}
+
+@Composable
+fun GlassMenuButton(
+    items: List<GlassMenuItemRecord>,
+    modifier: Modifier = Modifier,
+    alignment: String = "auto",
+    cornerRadius: Float? = null,
+    content: @Composable () -> Unit,
+) {
+    val isDark = isSystemInDarkTheme()
+    val currentContent by rememberUpdatedState(content)
+
+    if (!supportsNativeGlassMenu) {
+        var expanded by remember { mutableStateOf(false) }
+        Box(
+            modifier = modifier.clickable(enabled = items.isNotEmpty()) { expanded = true },
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+            if (expanded && items.isNotEmpty()) {
+                FallbackMenuDialog(
+                    items = items,
+                    onDismissRequest = { expanded = false },
+                )
+            }
+        }
+        return
+    }
+
+    val menuConfig = remember { GlassMenuConfigRecord() }
+
+    AndroidView(
+        modifier = modifier.defaultMinSize(minWidth = 40.dp, minHeight = 40.dp),
+        factory = { context ->
+            val composeChild = ComposeView(context).apply {
+                setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                setContent {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        currentContent()
+                    }
+                }
+            }
+            GlassMenuAndroidView(context).apply {
+                glass = true
+                this.cornerRadius = cornerRadius
+                this.config = menuConfig
+                this.alignment = alignment
+                colorScheme = if (isDark) "dark" else "light"
+                this.items = items
+                isClickable = true
+                isFocusable = true
+                addView(
+                    composeChild,
+                    FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        Gravity.CENTER,
+                    ),
+                )
+                setOnClickListener { open() }
+            }
+        },
+        update = { view ->
+            view.glass = true
+            view.cornerRadius = cornerRadius
+            if (view.config != menuConfig) view.config = menuConfig
+            view.alignment = alignment
+            view.colorScheme = if (isDark) "dark" else "light"
+            if (view.items != items) view.items = items
+        },
+    )
 }
 
 @Composable

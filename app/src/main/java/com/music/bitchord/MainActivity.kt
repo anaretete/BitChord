@@ -243,6 +243,7 @@ import com.music.bitchord.ui.components.MenuAnchor
 import com.music.bitchord.ui.components.menuAnchor
 import com.music.bitchord.ui.components.ExpoGlassMenuHost
 import com.music.bitchord.ui.components.GlassMenuAnchor
+import com.music.bitchord.ui.components.GlassMenuButton
 import com.music.bitchord.ui.components.buildSongMenuItems
 import com.music.bitchord.ui.components.SleepTimerSheetContent
 import com.music.bitchord.ui.components.SongInfoDialog
@@ -3988,14 +3989,11 @@ private fun BitChordApp(
                                             },
                                         )
                                     }
-                                    GlassMenuAnchor(
-                                        expanded = librarySortMenuOpen,
-                                        onDismissRequest = { librarySortMenuOpen = false },
+                                    GlassMenuButton(
                                         items = sortMenuItems,
-                                        modifier = Modifier.matchParentSize(),
-                                        glass = true,
-                                    )
-                                    IconButton(onClick = { librarySortMenuOpen = true }) {
+                                        modifier = Modifier.size(40.dp),
+                                        alignment = "right",
+                                    ) {
                                         Icon(
                                             Icons.Rounded.Sort,
                                             contentDescription = stringResource(R.string.sort_library),
