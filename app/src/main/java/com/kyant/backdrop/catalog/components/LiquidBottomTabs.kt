@@ -111,26 +111,32 @@ fun LiquidBottomTabs(
         var wasUnselected by remember {
             mutableStateOf(selectedTabIndex() < 0)
         }
-        val dampedDragAnimation = remember(animationScope) {
+        val maxIndex = if (mergedRightWidthPx > 0f) tabsCount else (tabsCount - 1).coerceAtLeast(0)
+        val dampedDragAnimation = remember(animationScope, maxIndex) {
             DampedDragAnimation(
                 animationScope = animationScope,
                 initialValue = selectedTabIndex().coerceAtLeast(0).toFloat(),
-                valueRange = 0f..(tabsCount - 1).coerceAtLeast(0).toFloat(),
+                valueRange = 0f..maxIndex.toFloat(),
                 visibilityThreshold = 0.001f,
                 initialScale = 1f,
                 pressedScale = 78f / 56f,
                 onDragStarted = {},
                 onDragStopped = {
-                    val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, tabsCount - 1)
-                    currentIndex = targetIndex
-                    animateToValue(targetIndex.toFloat())
-                    onTabSelected(targetIndex)
+                    val targetIndex = targetValue.fastRoundToInt().fastCoerceIn(0, maxIndex)
+                    currentIndex = targetIndex.coerceAtMost((tabsCount - 1).coerceAtLeast(0))
+                    if (targetIndex >= tabsCount) {
+                        animateToValue(selectedTabIndex().coerceAtLeast(0).toFloat())
+                        onTabSelected(targetIndex)
+                    } else {
+                        animateToValue(targetIndex.toFloat())
+                        onTabSelected(targetIndex)
+                    }
                 },
                 onDrag = { _, dragAmount ->
                     if (tabWidth > 0f) {
                         updateValue(
                             (targetValue + dragAmount.x / tabWidth * if (isLtr) 1f else -1f)
-                                .fastCoerceIn(0f, (tabsCount - 1).toFloat()),
+                                .fastCoerceIn(0f, maxIndex.toFloat()),
                         )
                     }
                 },
@@ -267,11 +273,20 @@ fun LiquidBottomTabs(
                 Modifier
                     .padding(horizontal = 4f.dp)
                     .graphicsLayer {
+                        val v = dampedDragAnimation.value
+                        val lastIdx = (tabsCount - 1).coerceAtLeast(0).toFloat()
+                        val rawX = if (v <= lastIdx || mergedRightWidthPx <= 0f) {
+                            v * tabWidth
+                        } else {
+                            val mergedEndX = (containerWidthPx + mergedRightWidthPx * 0.5f - tabWidth * 0.5f)
+                                .coerceAtLeast(lastIdx * tabWidth)
+                            lerp(lastIdx * tabWidth, mergedEndX, (v - lastIdx).coerceIn(0f, 1f))
+                        }
                         translationX =
                             if (isLtr) {
-                                dampedDragAnimation.value * tabWidth + panelOffset
+                                rawX + panelOffset
                             } else {
-                                size.width - (dampedDragAnimation.value + 1f) * tabWidth + panelOffset
+                                size.width - (rawX + tabWidth) + panelOffset
                             }
                     }
                     .then(interactiveHighlight.gestureModifier)

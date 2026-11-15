@@ -106,6 +106,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -684,6 +685,7 @@ private fun SharedTransitionScope.ExpandedBar(
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
                     mergedRightWidthPx = if (standaloneTab != null) standaloneWidthPx + spacingPx else 0f,
+                    onMergedStandaloneClick = { standaloneTab?.onClick?.invoke() },
                     onPressProgress = { tabPressProgress = it },
                     modifier = Modifier
                         .weight(1f)
@@ -700,6 +702,7 @@ private fun SharedTransitionScope.ExpandedBar(
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
                     backgroundAlpha = { 1f - tabPressProgress.coerceIn(0f, 1f) },
+                    titleAlpha = { tabPressProgress.coerceIn(0f, 1f) },
                     modifier = Modifier
                         .zIndex(3f)
                         .onSizeChanged { standaloneWidthPx = it.width.toFloat() }
@@ -767,6 +770,7 @@ private fun SharedTransitionScope.ExpandedTabs(
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
     mergedRightWidthPx: Float = 0f,
+    onMergedStandaloneClick: () -> Unit = {},
     onPressProgress: (Float) -> Unit = {},
     tabBarContentModifier: @Composable () -> Modifier
 ) {
@@ -791,10 +795,13 @@ private fun SharedTransitionScope.ExpandedTabs(
     val appBackdrop = LocalAppBackdrop.current
     if (glassPill && appBackdrop != null && scope.tabs.isNotEmpty()) {
         val currentTabs by rememberUpdatedState(scope.tabs)
+        val currentMergedClick by rememberUpdatedState(onMergedStandaloneClick)
         LiquidBottomTabs(
             selectedTabIndex = { currentSelectedTabIndex },
             onTabSelected = { idx ->
-                if (idx != currentSelectedTabIndex) {
+                if (idx >= currentTabs.size) {
+                    currentMergedClick()
+                } else if (idx != currentSelectedTabIndex) {
                     currentTabs.getOrNull(idx)?.onClick?.invoke()
                 }
             },
@@ -1061,6 +1068,7 @@ private fun SharedTransitionScope.ExpandedStandaloneTab(
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
     backgroundAlpha: () -> Float = { 1f },
+    titleAlpha: () -> Float = { 0f },
     tabBarContentModifier: @Composable () -> Modifier
 ) {
     Box(
@@ -1098,6 +1106,7 @@ private fun SharedTransitionScope.ExpandedStandaloneTab(
             title = standaloneTab.title,
             isInline = false,
             isStandalone = true,
+            titleAlpha = titleAlpha,
             modifier = Modifier.matchParentSize()
         )
     }
@@ -1109,7 +1118,8 @@ private fun Tab(
     title: @Composable () -> Unit,
     isInline: Boolean,
     modifier: Modifier = Modifier,
-    isStandalone: Boolean = false
+    isStandalone: Boolean = false,
+    titleAlpha: () -> Float = { if (!isStandalone && !isInline) 1f else 0f },
 ) {
     Column(
         verticalArrangement = Arrangement.Center,
@@ -1117,8 +1127,21 @@ private fun Tab(
         modifier = modifier
     ) {
         icon()
-        if (!isStandalone && !isInline) {
-            title()
+        if (!isInline) {
+            Box(
+                modifier = Modifier
+                    .layout { measurable, constraints ->
+                        val placeable = measurable.measure(constraints)
+                        val a = titleAlpha().coerceIn(0f, 1f)
+                        val h = (placeable.height * a).roundToInt()
+                        layout(placeable.width, h) {
+                            placeable.placeRelative(0, 0)
+                        }
+                    }
+                    .graphicsLayer { alpha = titleAlpha().coerceIn(0f, 1f) },
+            ) {
+                title()
+            }
         }
     }
 }
