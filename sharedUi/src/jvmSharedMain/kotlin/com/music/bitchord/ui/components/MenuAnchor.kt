@@ -62,19 +62,11 @@ object MenuAnchor {
 @Composable
 fun Modifier.menuAnchor(): Modifier {
     val anchor = remember { AnchorCoordinates() }
-    val active = MenuAnchor.activeAnchor
-    val isActive = active != null && anchor.bounds == active
-    val triggerAlpha by animateFloatAsState(
-        targetValue = if (isActive) 0f else 1f,
-        animationSpec = tween(durationMillis = 120),
-        label = "menuAnchorAlpha",
-    )
     return this
         .onPlaced {
             anchor.coordinates = it
             anchor.bounds = it.boundsInWindow()
         }
-        .graphicsLayer { alpha = triggerAlpha }
         .pointerInput(Unit) {
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
