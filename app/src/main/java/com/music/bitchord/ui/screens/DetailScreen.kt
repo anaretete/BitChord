@@ -1770,21 +1770,16 @@ private fun CircleIconButton(
     enabled: Boolean = true,
 ) {
     val haptics = rememberHaptics()
-    Box(
-        modifier = Modifier
-            .size(size)
-            .alpha(if (enabled) 1f else DISABLED_ACTION_ALPHA)
-            .clip(CircleShape)
-            .background(Color.White.copy(alpha = LIGHT_FILL_ALPHA), CircleShape)
-            // The glass rim the floating bars wear, with Liquid Glass on. Rim
-            // only: over the page's flat tint a blurred fill would look the same.
-            .liquidGlassRim(CircleShape)
-            .border(1.dp, Color.White.copy(alpha = TOP_RELEASE_EDGE_ALPHA), CircleShape)
-            .clickable(enabled = enabled) {
-                haptics.play(haptic)
-                onClick()
-            },
-        contentAlignment = Alignment.Center,
+    com.kyant.backdrop.catalog.components.LiquidIconButton(
+        onClick = {
+            haptics.play(haptic)
+            onClick()
+        },
+        modifier = Modifier,
+        enabled = enabled,
+        size = size,
+        shape = CircleShape,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Icon(
             imageVector = icon,

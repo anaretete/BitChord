@@ -43,11 +43,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import com.kyant.backdrop.catalog.components.LiquidIconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -345,8 +347,9 @@ fun FrostedTopBar(
     }
 }
 
+val LocalHideTopBarActionsSurface = compositionLocalOf { false }
+
 /** Circular floating back affordance, material-matched to the navbar. */
-@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun ArtworkPageBackButton(
     onClick: () -> Unit,
@@ -362,11 +365,12 @@ private fun ArtworkPageBackButton(
         MaterialTheme.colorScheme.onSurface
     }
 
-    IconButton(
+    LiquidIconButton(
         onClick = onClick,
-        modifier = modifier
-            .size(TOP_CONTROL_SIZE)
-            .then(artworkPageSurface(shape = shape, hazeState = hazeState)),
+        modifier = modifier,
+        size = TOP_CONTROL_SIZE,
+        shape = shape,
+        contentColor = contentColor,
     ) {
         Icon(
             SfIcons.ArrowBack,
@@ -383,28 +387,41 @@ private fun ArtworkPageActions(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    ActionsRow(
-        modifier = modifier
-            .then(artworkPageSurface(shape = CircleShape, hazeState = hazeState))
-            // Keep the right edge fixed while a new action opens room to its
-            // left. The surface itself therefore grows instead of jumping to
-            // its new width in a single frame.
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMediumLow,
-                ),
-            )
-            // One profile target with no inset is a true circle, the back
-            // button's size. Once another action exists, Apple's inset opens at
-            // both ends. This is layout padding inside the surface, not an
-            // outer margin, so BAR_GUTTER remains unchanged.
-            .artworkActionEdgePadding(),
-    ) {
-        // Apple's pill is as tall as its back button, 44pt, where the actions'
-        // own 48dp touch targets stood it 4dp taller than the circle beside it.
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides TOP_CONTROL_SIZE) {
-            content()
+    val hideSurface = LocalHideTopBarActionsSurface.current
+    val surfaceAlpha by animateFloatAsState(
+        targetValue = if (hideSurface) 0f else 1f,
+        animationSpec = tween(150),
+        label = "actionsSurfaceAlpha",
+    )
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer { alpha = surfaceAlpha }
+                .then(artworkPageSurface(shape = CircleShape, hazeState = hazeState)),
+        )
+        ActionsRow(
+            modifier = Modifier
+                // Keep the right edge fixed while a new action opens room to its
+                // left. The surface itself therefore grows instead of jumping to
+                // its new width in a single frame.
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                )
+                // One profile target with no inset is a true circle, the back
+                // button's size. Once another action exists, Apple's inset opens at
+                // both ends. This is layout padding inside the surface, not an
+                // outer margin, so BAR_GUTTER remains unchanged.
+                .artworkActionEdgePadding(),
+        ) {
+            // Apple's pill is as tall as its back button, 44pt, where the actions'
+            // own 48dp touch targets stood it 4dp taller than the circle beside it.
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides TOP_CONTROL_SIZE) {
+                content()
+            }
         }
     }
 }

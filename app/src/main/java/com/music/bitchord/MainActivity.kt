@@ -447,6 +447,7 @@ class MainActivity : AppCompatActivity() {
                     LocalOverscrollFactory provides iosOverscrollFactory,
                     LocalLiquidGlassEnabled provides liquidGlassEnabled,
                     LocalAppBackdrop provides appBackdrop,
+                    com.kyant.backdrop.catalog.components.LocalLayerBackdrop provides appBackdrop,
                 ) {
                 // The window's width, measured rather than asked for.
                 //
@@ -3782,6 +3783,10 @@ private fun BitChordApp(
                     )
                 }
 
+                var accountMenuOpen by remember { mutableStateOf(false) }
+                CompositionLocalProvider(
+                    com.music.bitchord.ui.components.LocalHideTopBarActionsSurface provides accountMenuOpen,
+                ) {
                 FrostedTopBar(
                     title = when (route) {
                         AppRoute.Spotify -> stringResource(R.string.spotify)
@@ -3932,11 +3937,21 @@ private fun BitChordApp(
                                 }
                             }
                         }
+                        val actionsFadeAlpha by animateFloatAsState(
+                            targetValue = if (accountMenuOpen) 0f else 1f,
+                            animationSpec = tween(150),
+                            label = "topBarActionsFadeAlpha",
+                        )
                         // Only worth surfacing where there's room for it and it won't
                         // be mistaken for a per-page action — Home, at rest.
                         if (route == null && detail == null && selectedTab == TAB_HOME) {
                             updateNotice?.let { update ->
-                                IconButton(onClick = { showUpdateDialog = true }) {
+                                com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                    onClick = { showUpdateDialog = true },
+                                    modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
+                                    size = 40.dp,
+                                    contentColor = MaterialTheme.colorScheme.primary,
+                                ) {
                                     Icon(
                                         // An arrow rising out of a bar, not the
                                         // little phone-with-an-arrow: at 24dp the
@@ -3957,11 +3972,14 @@ private fun BitChordApp(
                             // a history is a record of what was played, which reads
                             // as that tab's business rather than every tab's.
                             if (route == null && detail == null && selectedTab == TAB_LIBRARY) {
-                                IconButton(
+                                com.kyant.backdrop.catalog.components.LiquidIconButton(
                                     onClick = {
                                         navigator.push(AppRoute.History)
                                         viewModel.loadHistory()
                                     },
+                                    modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
+                                    size = 40.dp,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
                                 ) {
                                     Icon(
                                         Icons.Rounded.History,
@@ -3976,7 +3994,7 @@ private fun BitChordApp(
                             // the one thing a playlist or album card carries: a
                             // title.
                             if (route is AppRoute.LibraryShowAll) {
-                                Box {
+                                Box(Modifier.graphicsLayer { alpha = actionsFadeAlpha }) {
                                     val sortMenuItems = LibrarySort.entries.map { option ->
                                         GlassMenuItemRecord(
                                             id = option.name,
@@ -4014,7 +4032,12 @@ private fun BitChordApp(
                             if ((isReleaseDetail || isLocalDetail) && detail != null) {
                                 val releaseSongs = (detail.songs as? UiState.Success)?.data.orEmpty()
                                 if (releaseSongs.isNotEmpty()) {
-                                    IconButton(onClick = { detailSearching = !detailSearching }) {
+                                    com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                        onClick = { detailSearching = !detailSearching },
+                                        modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
+                                        size = 40.dp,
+                                        contentColor = MaterialTheme.colorScheme.onSurface,
+                                    ) {
                                         Icon(
                                             if (detailSearching) Icons.Rounded.Close else BitChordIcons.Search,
                                             contentDescription = stringResource(
@@ -4096,8 +4119,12 @@ private fun BitChordApp(
                                     // tracks arrive stamped with the album they came
                                     // off, which is what the download record groups
                                     // them under.
-                                    IconButton(
-                                        modifier = Modifier.menuAnchor(),
+                                    com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                        modifier = Modifier
+                                            .menuAnchor()
+                                            .graphicsLayer { alpha = actionsFadeAlpha },
+                                        size = 40.dp,
+                                        contentColor = MaterialTheme.colorScheme.onSurface,
                                         onClick = {
                                             openBrowseMenu(BrowseTarget(
                                                 browseId = detail.browseId,
@@ -4131,7 +4158,10 @@ private fun BitChordApp(
                             if (detail != null && !isLocalDetail && detail.type == BrowseType.ARTIST &&
                                 detailActiveShelf == null && detail.browseId.startsWith("UC")
                             ) {
-                                IconButton(
+                                com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                    modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
+                                    size = 40.dp,
+                                    contentColor = MaterialTheme.colorScheme.onSurface,
                                     onClick = {
                                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"
@@ -4156,7 +4186,9 @@ private fun BitChordApp(
                             // itself rather than being told. Not on the page it
                             // opens, where it would only lead back to itself.
                             if (route != AppRoute.Downloads) {
-                                TopBarDownloadButton(onClick = { navigator.push(AppRoute.Downloads) })
+                                Box(Modifier.graphicsLayer { alpha = actionsFadeAlpha }) {
+                                    TopBarDownloadButton(onClick = { navigator.push(AppRoute.Downloads) })
+                                }
                             }
                             // Not on a release page, whose pill already carries
                             // three of its own controls — Apple Music leaves the
@@ -4228,11 +4260,17 @@ private fun BitChordApp(
                                         items = accountMenuItems,
                                         iconSlots = accountIconSlots,
                                         alignment = "right",
-                                        glass = false,
+                                        glass = accountMenuOpen,
+                                        cornerRadius = 24f,
                                         modifier = Modifier.size(48.dp),
-                                        onOpenChange = { isOpen -> if (isOpen) viewModel.loadChannels() },
+                                        onOpenChange = { isOpen ->
+                                            accountMenuOpen = isOpen
+                                            if (isOpen) viewModel.loadChannels()
+                                        },
                                     ) {
-                                        com.music.bitchord.ui.components.TopBarAccountAvatar(account = account)
+                                        Box(Modifier.graphicsLayer { alpha = actionsFadeAlpha }) {
+                                            com.music.bitchord.ui.components.TopBarAccountAvatar(account = account)
+                                        }
                                     }
                                 } else {
                                     TopBarAccountButton(
@@ -4250,6 +4288,7 @@ private fun BitChordApp(
                         }
                     },
                 )
+                }
 
                 // Drawn before the bars so their own glass reads on top of it.
                 BottomFadeScrim(

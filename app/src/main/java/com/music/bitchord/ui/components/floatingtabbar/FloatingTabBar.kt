@@ -663,7 +663,9 @@ private fun SharedTransitionScope.ExpandedBar(
         // overflow this row used to be able to hit: the pill is now given a
         // width to divide rather than growing past the screen to fit its labels.
         var tabPressProgress by remember { mutableFloatStateOf(0f) }
-        val spacingPx = with(LocalDensity.current) { sizes.componentSpacing.toPx() }
+        val density = LocalDensity.current
+        val spacingPx = with(density) { sizes.componentSpacing.toPx() }
+        var standaloneWidthPx by remember(density) { mutableFloatStateOf(with(density) { 64.dp.toPx() }) }
         Row(
             horizontalArrangement = Arrangement.spacedBy(sizes.componentSpacing),
             verticalAlignment = Alignment.CenterVertically,
@@ -681,6 +683,7 @@ private fun SharedTransitionScope.ExpandedBar(
                     elevations = elevations,
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
+                    mergedRightWidthPx = if (standaloneTab != null) standaloneWidthPx + spacingPx else 0f,
                     onPressProgress = { tabPressProgress = it },
                     modifier = Modifier
                         .weight(1f)
@@ -696,12 +699,14 @@ private fun SharedTransitionScope.ExpandedBar(
                     elevations = elevations,
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
+                    backgroundAlpha = { 1f - tabPressProgress.coerceIn(0f, 1f) },
                     modifier = Modifier
-                        .zIndex(0f)
+                        .zIndex(3f)
+                        .onSizeChanged { standaloneWidthPx = it.width.toFloat() }
                         .graphicsLayer {
                             val p = tabPressProgress.coerceIn(0f, 1f)
-                            translationX = -spacingPx * 1.15f * p
-                            val s = 1f - 0.06f * p
+                            translationX = -spacingPx * 0.25f * p
+                            val s = 1f - 0.05f * p
                             scaleX = s
                             scaleY = s
                         }
@@ -761,6 +766,7 @@ private fun SharedTransitionScope.ExpandedTabs(
     elevations: FloatingTabBarElevations,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
+    mergedRightWidthPx: Float = 0f,
     onPressProgress: (Float) -> Unit = {},
     tabBarContentModifier: @Composable () -> Modifier
 ) {
@@ -795,6 +801,7 @@ private fun SharedTransitionScope.ExpandedTabs(
             backdrop = appBackdrop,
             tabsCount = scope.tabs.size,
             accentColor = glassContentColor(),
+            mergedRightWidthPx = mergedRightWidthPx,
             onPressProgress = onPressProgress,
             modifier = modifier.sharedElement(
                 sharedContentState = rememberSharedContentState("tabGroup"),
@@ -1053,35 +1060,47 @@ private fun SharedTransitionScope.ExpandedStandaloneTab(
     elevations: FloatingTabBarElevations,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
+    backgroundAlpha: () -> Float = { 1f },
     tabBarContentModifier: @Composable () -> Modifier
 ) {
-    Tab(
-        icon = standaloneTab.icon,
-        title = standaloneTab.title,
-        isInline = false,
-        isStandalone = true,
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
             .sharedElement(
                 sharedContentState = rememberSharedContentState("standaloneTab"),
                 animatedVisibilityScope = animatedVisibilityScope,
                 zIndexInOverlay = 1f
             )
-            .shadow(
-                shape = shapes.standaloneTabShape,
-                elevation = elevations.expandedElevation
-            )
-            .background(
-                color = colors.backgroundColor,
-                shape = shapes.standaloneTabShape
-            )
             .clip(shapes.standaloneTabShape)
-            .then(tabBarContentModifier())
             .clickable(
                 onClick = standaloneTab.onClick,
                 indication = standaloneTab.indication?.invoke(),
                 interactionSource = remember { MutableInteractionSource() }
             )
-    )
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer { alpha = backgroundAlpha() }
+                .shadow(
+                    shape = shapes.standaloneTabShape,
+                    elevation = elevations.expandedElevation
+                )
+                .background(
+                    color = colors.backgroundColor,
+                    shape = shapes.standaloneTabShape
+                )
+                .clip(shapes.standaloneTabShape)
+                .then(tabBarContentModifier())
+        )
+        Tab(
+            icon = standaloneTab.icon,
+            title = standaloneTab.title,
+            isInline = false,
+            isStandalone = true,
+            modifier = Modifier.matchParentSize()
+        )
+    }
 }
 
 @Composable

@@ -257,11 +257,9 @@ fun DacVolumeHud(hazeState: HazeState) {
                         if (reduceBlur) {
                             Modifier.background(Color(0xFF1C1C1E).copy(alpha = 0.82f))
                         } else {
-                            // A light frost, as iOS draws it: the page shows
-                            // through, blurred and only slightly darkened.
-                            Modifier.optimizedHazeEffect(
-                                state = hazeState,
-                                style = HazeMaterials.ultraThin(Color(0xFF1C1C1E)),
+                            Modifier.liquidGlass(
+                                shape = RoundedCornerShape(percent = 50),
+                                surfaceTint = Color(0xFF1C1C1E).copy(alpha = 0.45f),
                             )
                         },
                     )

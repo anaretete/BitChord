@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -58,6 +59,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sign
 
 @Composable
@@ -68,6 +70,7 @@ fun LiquidBottomTabs(
     tabsCount: Int,
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary,
+    mergedRightWidthPx: Float = 0f,
     onPressProgress: (Float) -> Unit = {},
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -172,11 +175,25 @@ fun LiquidBottomTabs(
             )
         }
 
+        val expandPillModifier = Modifier.layout { measurable, constraints ->
+            val extra = (mergedRightWidthPx * dampedDragAnimation.pressProgress.coerceIn(0f, 1f)).roundToInt()
+            val expandedMax = if (constraints.hasBoundedWidth) constraints.maxWidth + extra else constraints.maxWidth
+            val expandedMin = if (constraints.hasFixedWidth) constraints.minWidth + extra else constraints.minWidth
+            val placeable = measurable.measure(constraints.copy(minWidth = expandedMin, maxWidth = expandedMax))
+            layout(constraints.maxWidth, placeable.height) {
+                placeable.placeRelative(0, 0)
+            }
+        }
+        val extraEndPadding = with(density) {
+            (mergedRightWidthPx * dampedDragAnimation.pressProgress.coerceIn(0f, 1f)).toDp()
+        }
+
         Row(
             Modifier
                 .graphicsLayer {
                     translationX = panelOffset
                 }
+                .then(expandPillModifier)
                 .drawBackdrop(
                     backdrop = backdrop,
                     shape = { Capsule() },
@@ -196,7 +213,7 @@ fun LiquidBottomTabs(
                 .then(interactiveHighlight.modifier)
                 .height(64f.dp)
                 .fillMaxWidth()
-                .padding(4f.dp),
+                .padding(start = 4f.dp, top = 4f.dp, bottom = 4f.dp, end = 4f.dp + extraEndPadding),
             verticalAlignment = Alignment.CenterVertically,
             content = content,
         )
@@ -210,6 +227,7 @@ fun LiquidBottomTabs(
                 Modifier
                     .clearAndSetSemantics {}
                     .alpha(0f)
+                    .then(expandPillModifier)
                     .layerBackdrop(tabsBackdrop)
                     .graphicsLayer {
                         translationX = panelOffset
@@ -237,7 +255,7 @@ fun LiquidBottomTabs(
                     .then(interactiveHighlight.modifier)
                     .height(56f.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 4f.dp)
+                    .padding(start = 4f.dp, end = 4f.dp + extraEndPadding)
                     .graphicsLayer(colorFilter = ColorFilter.tint(accentColor)),
                 verticalAlignment = Alignment.CenterVertically,
                 content = content,
