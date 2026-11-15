@@ -553,33 +553,41 @@ fun TopBarAccountButton(
                 )
             },
     ) {
-        val photo = account?.thumbnailUrl
-        if (photo != null) {
-            AsyncImage(
-                model = photo,
+        TopBarAccountAvatar(account = account)
+    }
+}
+
+@Composable
+fun TopBarAccountAvatar(
+    account: Account?,
+    modifier: Modifier = Modifier,
+) {
+    val photo = account?.thumbnailUrl
+    if (photo != null) {
+        AsyncImage(
+            model = photo,
+            contentDescription = stringResource(R.string.switch_account),
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .size(AVATAR_SIZE)
+                .clip(CircleShape)
+                .thumbnailBorder(CircleShape),
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .size(AVATAR_SIZE)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .thumbnailBorder(CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Rounded.Person,
                 contentDescription = stringResource(R.string.switch_account),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(AVATAR_SIZE)
-                    .clip(CircleShape)
-                    .thumbnailBorder(CircleShape),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
             )
-        } else {
-            Box(
-                modifier = Modifier
-                    .size(AVATAR_SIZE)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .thumbnailBorder(CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    Icons.Rounded.Person,
-                    contentDescription = stringResource(R.string.switch_account),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
         }
     }
 }

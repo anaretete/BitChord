@@ -286,10 +286,14 @@ fun GlassMenuButton(
     alignment: String = "auto",
     glass: Boolean = false,
     cornerRadius: Float? = null,
+    iconSlots: List<@Composable () -> Unit> = emptyList(),
+    onOpenChange: ((Boolean) -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val isDark = isSystemInDarkTheme()
     val currentContent by rememberUpdatedState(content)
+    val currentIconSlots by rememberUpdatedState(iconSlots)
+    val currentOnOpenChange by rememberUpdatedState(onOpenChange)
 
     if (!supportsNativeGlassMenu) {
         var expanded by remember { mutableStateOf(false) }
@@ -309,6 +313,8 @@ fun GlassMenuButton(
     }
 
     val menuConfig = remember { GlassMenuConfigRecord() }
+    val density = LocalDensity.current
+    val iconPx = with(density) { 24.dp.roundToPx() }
 
     AndroidView(
         modifier = modifier.defaultMinSize(minWidth = 40.dp, minHeight = 40.dp),
@@ -324,6 +330,9 @@ fun GlassMenuButton(
                     }
                 }
             }
+            val iconHost = FrameLayout(context).apply {
+                tag = "GlassMenu.iconHost"
+            }
             GlassMenuAndroidView(context).apply {
                 this.glass = glass
                 this.cornerRadius = cornerRadius
@@ -331,6 +340,10 @@ fun GlassMenuButton(
                 this.alignment = alignment
                 colorScheme = if (isDark) "dark" else "light"
                 this.items = items
+                onMenuOpenChange = { map ->
+                    val isOpen = (map["open"] as? Boolean) ?: (map["isOpen"] as? Boolean) ?: false
+                    currentOnOpenChange?.invoke(isOpen)
+                }
                 isClickable = true
                 isFocusable = true
                 addView(
@@ -339,6 +352,13 @@ fun GlassMenuButton(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         Gravity.CENTER,
+                    ),
+                )
+                addView(
+                    iconHost,
+                    FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
                     ),
                 )
                 setOnClickListener { open() }
@@ -351,6 +371,26 @@ fun GlassMenuButton(
             view.alignment = alignment
             view.colorScheme = if (isDark) "dark" else "light"
             if (view.items != items) view.items = items
+            val iconHost = (0 until view.childCount)
+                .map { view.getChildAt(it) }
+                .firstOrNull { it.tag == "GlassMenu.iconHost" } as? FrameLayout
+            if (iconHost != null) {
+                while (iconHost.childCount > currentIconSlots.size) {
+                    iconHost.removeViewAt(iconHost.childCount - 1)
+                }
+                for (i in currentIconSlots.indices) {
+                    val slotComposable = currentIconSlots[i]
+                    if (i < iconHost.childCount) {
+                        (iconHost.getChildAt(i) as? ComposeView)?.setContent { slotComposable() }
+                    } else {
+                        val slotView = ComposeView(view.context).apply {
+                            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+                            setContent { slotComposable() }
+                        }
+                        iconHost.addView(slotView, FrameLayout.LayoutParams(iconPx, iconPx))
+                    }
+                }
+            }
         },
     )
 }

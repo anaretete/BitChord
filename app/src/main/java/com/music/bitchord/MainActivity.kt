@@ -4028,8 +4028,56 @@ private fun BitChordApp(
                                 // with the app's other frosted overlays further
                                 // down — in the main hierarchy, where the haze
                                 // can see the content it blurs.
-                                IconButton(
-                                    onClick = { if (isLocalDetail) folderMenuOpen = true else songSortMenuOpen = true },
+                                val detailMenuItems = if (isLocalDetail) {
+                                    val menuFolder = detail.browseId
+                                    val downloadsFolder = menuFolder == "local:downloads"
+                                    val viewType = folderViewTypeOf(menuFolder)
+                                    val isGrid = viewType == LibraryViewType.GRID
+                                    val currentFolderSort = folderSortOf(menuFolder)
+                                    buildList {
+                                        add(
+                                            GlassMenuItemRecord(
+                                                id = "toggle_view",
+                                                title = stringResource(if (isGrid) R.string.switch_to_list_view else R.string.switch_to_grid_view),
+                                                icon = if (isGrid) "list.bullet" else "square.grid.2x2",
+                                                onClick = {
+                                                    val next = if (isGrid) LibraryViewType.LIST else LibraryViewType.GRID
+                                                    if (downloadsFolder) AppSettings.setDownloadedMusicViewType(next)
+                                                    else AppSettings.setLocalMusicViewType(next)
+                                                },
+                                            ),
+                                        )
+                                        add(GlassMenuItemRecord(id = "sep_folder", separator = true))
+                                        LocalMusicSort.entries.forEach { option ->
+                                            add(
+                                                GlassMenuItemRecord(
+                                                    id = option.name,
+                                                    title = option.localizedLabel(),
+                                                    icon = if (option == currentFolderSort) "check" else null,
+                                                    checked = if (option == currentFolderSort) true else null,
+                                                    onClick = {
+                                                        if (downloadsFolder) AppSettings.setDownloadedMusicSort(option)
+                                                        else AppSettings.setLocalMusicSort(option)
+                                                    },
+                                                ),
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    SongSort.entries.map { option ->
+                                        GlassMenuItemRecord(
+                                            id = option.name,
+                                            title = option.localizedLabel(),
+                                            icon = if (option == songSort) "check" else null,
+                                            checked = if (option == songSort) true else null,
+                                            onClick = { AppSettings.setDetailSongSort(detail.browseId, option) },
+                                        )
+                                    }
+                                }
+                                GlassMenuButton(
+                                    items = detailMenuItems,
+                                    modifier = Modifier.size(40.dp),
+                                    alignment = "right",
                                 ) {
                                     Icon(
                                         Icons.Rounded.Sort,
@@ -4114,12 +4162,79 @@ private fun BitChordApp(
                             // three of its own controls — Apple Music leaves the
                             // profile off its album pages too.
                             if (!isReleaseDetail) {
-                                val accountButtonAlpha by animateFloatAsState(
-                                    targetValue = if (showAccountSelector) 0f else 1f,
-                                    animationSpec = tween(durationMillis = 120),
-                                    label = "accountButtonAlpha",
-                                )
-                                Box(Modifier.graphicsLayer { alpha = accountButtonAlpha }) {
+                                if (signedIn && supportsNativeGlassMenu) {
+                                    val accountsFallback = stringResource(R.string.accounts)
+                                    val brandLabel = stringResource(R.string.brand_account)
+                                    val personalLabel = stringResource(R.string.personal)
+                                    val addAccountLabel = stringResource(R.string.add_account)
+                                    val settingsLabel = stringResource(R.string.settings)
+                                    val accountIconSlots = mutableListOf<@Composable () -> Unit>()
+                                    val accountMenuItems = buildList {
+                                        googleAccounts.forEach { acc ->
+                                            val accountHeader = acc.email.ifBlank { acc.name.ifBlank { accountsFallback } }
+                                            add(GlassMenuItemRecord(id = "hdr_${acc.accountId}", title = accountHeader, heading = true))
+                                            acc.profiles.forEach { profile ->
+                                                val selected = acc.accountId == activeAccountId && profile.profileId == activeProfileId
+                                                val roleLabel = profile.handle.ifBlank { if (profile.isBrandAccount) brandLabel else personalLabel }
+                                                val photoUrl = profile.avatar ?: account?.thumbnailUrl
+                                                val slotIdx = if (photoUrl != null) {
+                                                    val idx = accountIconSlots.size
+                                                    accountIconSlots.add {
+                                                        coil3.compose.AsyncImage(
+                                                            model = photoUrl,
+                                                            contentDescription = null,
+                                                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                                            modifier = Modifier
+                                                                .size(24.dp)
+                                                                .clip(CircleShape),
+                                                        )
+                                                    }
+                                                    idx
+                                                } else null
+                                                add(
+                                                    GlassMenuItemRecord(
+                                                        id = "${acc.accountId}_${profile.profileId}",
+                                                        title = profile.name,
+                                                        subtitle = roleLabel,
+                                                        icon = if (slotIdx == null) (if (selected) "check" else "person.circle") else null,
+                                                        iconSlot = slotIdx,
+                                                        checked = if (selected) true else null,
+                                                        onClick = { viewModel.selectProfile(acc.accountId, profile.profileId) },
+                                                    ),
+                                                )
+                                            }
+                                        }
+                                        if (googleAccounts.isNotEmpty()) {
+                                            add(GlassMenuItemRecord(id = "sep_acc_actions", separator = true))
+                                        }
+                                        add(
+                                            GlassMenuItemRecord(
+                                                id = "add_account",
+                                                title = addAccountLabel,
+                                                icon = "plus.circle",
+                                                onClick = { webSession = WebSessionMode.SIGN_IN },
+                                            ),
+                                        )
+                                        add(
+                                            GlassMenuItemRecord(
+                                                id = "settings",
+                                                title = settingsLabel,
+                                                icon = "gearshape",
+                                                onClick = { navigator.push(AppRoute.Settings) },
+                                            ),
+                                        )
+                                    }
+                                    GlassMenuButton(
+                                        items = accountMenuItems,
+                                        iconSlots = accountIconSlots,
+                                        alignment = "right",
+                                        glass = false,
+                                        modifier = Modifier.size(48.dp),
+                                        onOpenChange = { isOpen -> if (isOpen) viewModel.loadChannels() },
+                                    ) {
+                                        com.music.bitchord.ui.components.TopBarAccountAvatar(account = account)
+                                    }
+                                } else {
                                     TopBarAccountButton(
                                         account = account,
                                         onClick = {

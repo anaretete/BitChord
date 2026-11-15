@@ -909,26 +909,34 @@ internal fun AlertScaffold(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .width(ALERT_WIDTH)
                 .clip(shape)
-                .then(
-                    if (reduceDynamicBlur || !frosted) {
-                        Modifier.background(MaterialTheme.colorScheme.surface)
-                    } else {
-                        Modifier.optimizedHazeEffect(
-                            state = hazeState,
-                            style = HazeMaterials.regular(MaterialTheme.colorScheme.surface),
-                        )
-                    },
-                )
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
                     onClick = {},
                 ),
-            content = content,
-        )
+        ) {
+            if (supportsNativeGlassMenu && !reduceDynamicBlur && frosted) {
+                NativeGlassSurface(modifier = Modifier.matchParentSize(), cornerRadius = 22.dp)
+            } else if (reduceDynamicBlur || !frosted) {
+                Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.surface))
+            } else {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .optimizedHazeEffect(
+                            state = hazeState,
+                            style = HazeMaterials.regular(MaterialTheme.colorScheme.surface),
+                        ),
+                )
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                content = content,
+            )
+        }
     }
 }

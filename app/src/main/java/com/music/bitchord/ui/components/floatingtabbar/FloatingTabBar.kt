@@ -663,6 +663,7 @@ private fun SharedTransitionScope.ExpandedBar(
         // overflow this row used to be able to hit: the pill is now given a
         // width to divide rather than growing past the screen to fit its labels.
         var tabPressProgress by remember { mutableFloatStateOf(0f) }
+        val spacingPx = with(LocalDensity.current) { sizes.componentSpacing.toPx() }
         Row(
             horizontalArrangement = Arrangement.spacedBy(sizes.componentSpacing),
             verticalAlignment = Alignment.CenterVertically,
@@ -699,8 +700,8 @@ private fun SharedTransitionScope.ExpandedBar(
                         .zIndex(0f)
                         .graphicsLayer {
                             val p = tabPressProgress.coerceIn(0f, 1f)
-                            alpha = 1f - p
-                            val s = 1f - 0.15f * p
+                            translationX = -spacingPx * 1.15f * p
+                            val s = 1f - 0.06f * p
                             scaleX = s
                             scaleY = s
                         }

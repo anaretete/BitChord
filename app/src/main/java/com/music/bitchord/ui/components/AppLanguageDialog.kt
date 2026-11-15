@@ -140,20 +140,10 @@ fun AppLanguageDialog(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .width(ALERT_WIDTH)
                 .clip(shape)
-                .then(
-                    if (reduceDynamicBlur) {
-                        Modifier.background(MaterialTheme.colorScheme.surface)
-                    } else {
-                        Modifier.optimizedHazeEffect(
-                            state = hazeState,
-                            style = HazeMaterials.regular(MaterialTheme.colorScheme.surface),
-                        )
-                    },
-                )
                 // Swallows the tap before it reaches the scrim behind, so
                 // touching the card itself never dismisses it.
                 .clickable(
@@ -162,7 +152,22 @@ fun AppLanguageDialog(
                     onClick = {},
                 ),
         ) {
-            Column(
+            if (supportsNativeGlassMenu && !reduceDynamicBlur) {
+                NativeGlassSurface(modifier = Modifier.matchParentSize(), cornerRadius = 22.dp)
+            } else if (reduceDynamicBlur) {
+                Box(Modifier.matchParentSize().background(MaterialTheme.colorScheme.surface))
+            } else {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .optimizedHazeEffect(
+                            state = hazeState,
+                            style = HazeMaterials.regular(MaterialTheme.colorScheme.surface),
+                        ),
+                )
+            }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 19.dp),
@@ -216,6 +221,7 @@ fun AppLanguageDialog(
                         },
                     )
                 }
+            }
             }
         }
     }
