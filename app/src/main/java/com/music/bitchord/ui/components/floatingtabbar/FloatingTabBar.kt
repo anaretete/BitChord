@@ -408,6 +408,7 @@ interface FloatingTabBarScope {
         key: Any,
         icon: @Composable () -> Unit,
         onClick: () -> Unit,
+        title: @Composable () -> Unit = {},
         indication: (@Composable () -> Indication)? = { LocalIndication.current }
     )
 }
@@ -701,6 +702,7 @@ private fun SharedTransitionScope.ExpandedBar(
                     elevations = elevations,
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
+                    isSelected = selectedTabKey == standaloneTab.key,
                     backgroundAlpha = { 1f - tabPressProgress.coerceIn(0f, 1f) },
                     titleAlpha = { tabPressProgress.coerceIn(0f, 1f) },
                     modifier = Modifier
@@ -807,7 +809,7 @@ private fun SharedTransitionScope.ExpandedTabs(
             },
             backdrop = appBackdrop,
             tabsCount = scope.tabs.size,
-            accentColor = glassContentColor(),
+            accentColor = MaterialTheme.colorScheme.primary,
             mergedRightWidthPx = mergedRightWidthPx,
             onPressProgress = onPressProgress,
             modifier = modifier.sharedElement(
@@ -1067,6 +1069,7 @@ private fun SharedTransitionScope.ExpandedStandaloneTab(
     elevations: FloatingTabBarElevations,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
+    isSelected: Boolean = false,
     backgroundAlpha: () -> Float = { 1f },
     titleAlpha: () -> Float = { 0f },
     tabBarContentModifier: @Composable () -> Modifier
@@ -1101,6 +1104,14 @@ private fun SharedTransitionScope.ExpandedStandaloneTab(
                 .clip(shapes.standaloneTabShape)
                 .then(tabBarContentModifier())
         )
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(4.dp)
+                    .background(colors.indicatorColor, shapes.standaloneTabShape),
+            )
+        }
         Tab(
             icon = standaloneTab.icon,
             title = standaloneTab.title,
@@ -1282,11 +1293,12 @@ private class FloatingTabBarScopeImpl : FloatingTabBarScope {
         key: Any,
         icon: @Composable () -> Unit,
         onClick: () -> Unit,
+        title: @Composable () -> Unit,
         indication: (@Composable () -> Indication)?
     ) {
         standaloneTab = FloatingTabBarTab(
             key = key,
-            title = {},
+            title = title,
             icon = icon,
             onClick = onClick,
             indication = indication

@@ -332,6 +332,7 @@ fun GlassMenuButton(
             }
             val iconHost = FrameLayout(context).apply {
                 tag = "GlassMenu.iconHost"
+                visibility = android.view.View.INVISIBLE
             }
             GlassMenuAndroidView(context).apply {
                 this.glass = glass

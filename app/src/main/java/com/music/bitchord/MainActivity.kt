@@ -3783,10 +3783,6 @@ private fun BitChordApp(
                     )
                 }
 
-                var accountMenuOpen by remember { mutableStateOf(false) }
-                CompositionLocalProvider(
-                    com.music.bitchord.ui.components.LocalHideTopBarActionsSurface provides accountMenuOpen,
-                ) {
                 FrostedTopBar(
                     title = when (route) {
                         AppRoute.Spotify -> stringResource(R.string.spotify)
@@ -3937,11 +3933,7 @@ private fun BitChordApp(
                                 }
                             }
                         }
-                        val actionsFadeAlpha by animateFloatAsState(
-                            targetValue = if (accountMenuOpen) 0f else 1f,
-                            animationSpec = tween(150),
-                            label = "topBarActionsFadeAlpha",
-                        )
+                        val actionsFadeAlpha = 1f
                         // Only worth surfacing where there's room for it and it won't
                         // be mistaken for a per-page action — Home, at rest.
                         if (route == null && detail == null && selectedTab == TAB_HOME) {
@@ -4208,7 +4200,8 @@ private fun BitChordApp(
                                             acc.profiles.forEach { profile ->
                                                 val selected = acc.accountId == activeAccountId && profile.profileId == activeProfileId
                                                 val roleLabel = profile.handle.ifBlank { if (profile.isBrandAccount) brandLabel else personalLabel }
-                                                val photoUrl = profile.avatar ?: account?.thumbnailUrl
+                                                val photoUrl = profile.avatar?.takeIf { it.isNotBlank() }
+                                                    ?: account?.thumbnailUrl?.takeIf { it.isNotBlank() }
                                                 val slotIdx = if (photoUrl != null) {
                                                     val idx = accountIconSlots.size
                                                     accountIconSlots.add {
@@ -4260,17 +4253,14 @@ private fun BitChordApp(
                                         items = accountMenuItems,
                                         iconSlots = accountIconSlots,
                                         alignment = "right",
-                                        glass = accountMenuOpen,
+                                        glass = false,
                                         cornerRadius = 24f,
                                         modifier = Modifier.size(48.dp),
                                         onOpenChange = { isOpen ->
-                                            accountMenuOpen = isOpen
                                             if (isOpen) viewModel.loadChannels()
                                         },
                                     ) {
-                                        Box(Modifier.graphicsLayer { alpha = actionsFadeAlpha }) {
-                                            com.music.bitchord.ui.components.TopBarAccountAvatar(account = account)
-                                        }
+                                        com.music.bitchord.ui.components.TopBarAccountAvatar(account = account)
                                     }
                                 } else {
                                     TopBarAccountButton(
@@ -4288,7 +4278,6 @@ private fun BitChordApp(
                         }
                     },
                 )
-                }
 
                 // Drawn before the bars so their own glass reads on top of it.
                 BottomFadeScrim(

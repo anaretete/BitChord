@@ -29,9 +29,17 @@ import com.music.bitchord.playback.AudioRouting
 import com.music.bitchord.playback.audio.bitperfect.BitPerfectOutput
 import com.music.bitchord.playback.audio.bitperfect.DacVolume
 import com.music.bitchord.playback.cast.CastController
+import androidx.compose.ui.unit.dp
+import com.music.bitchord.ui.components.backdrop.backdrops.LayerBackdrop
 import com.music.bitchord.ui.components.backdrop.backdrops.SnapshotBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.layerBackdrop
+import com.music.bitchord.ui.components.backdrop.backdrops.rememberLayerBackdrop
 import com.music.bitchord.ui.components.backdrop.backdrops.rememberSnapshotBackdrop
 import com.music.bitchord.ui.components.backdrop.backdrops.snapshotBackdropSource
+import com.music.bitchord.ui.components.backdrop.drawBackdrop
+import com.music.bitchord.ui.components.backdrop.effects.blur
+import com.music.bitchord.ui.components.backdrop.effects.lens
+import com.music.bitchord.ui.components.backdrop.effects.vibrancy
 import com.music.bitchord.ui.components.isGlassSupported
 import com.music.bitchord.ui.components.menuBackdropFrost
 import dev.chrisbanes.haze.HazeState
@@ -237,7 +245,28 @@ class AndroidPlayerHost(context: Context) : PlayerHost {
     override fun rememberPlayerFrost(): PlayerFrost? {
         if (!isGlassSupported()) return null
         val backdrop = rememberSnapshotBackdrop()
-        return remember(backdrop) { BackdropPlayerFrost(backdrop) }
+        val liveBackdrop = rememberLayerBackdrop()
+        return remember(backdrop, liveBackdrop) { BackdropPlayerFrost(backdrop, liveBackdrop) }
+    }
+
+    @Composable
+    override fun liquidGlassSurface(shape: Shape, active: Boolean): Modifier {
+        if (!isGlassSupported()) return Modifier
+        val reduceBlur by AppSettings.reduceDynamicBlur.collectAsStateWithLifecycle()
+        if (reduceBlur) return Modifier
+        val frost = (LocalPlayerLiveFrost.current ?: LocalPlayerFrost.current) as? BackdropPlayerFrost ?: return Modifier
+        return Modifier.drawBackdrop(
+            backdrop = frost.liveBackdrop,
+            shape = { shape },
+            effects = {
+                vibrancy()
+                blur(6f.dp.toPx())
+                lens(10f.dp.toPx(), 16f.dp.toPx(), chromaticAberration = true)
+            },
+            onDrawSurface = {
+                drawRect(Color.White.copy(alpha = if (active) 0.24f else 0.12f))
+            },
+        )
     }
 
     // The phone is the platform that can turn picked lyrics into a picture: a
@@ -354,9 +383,13 @@ private class MusicStreamVolume(private val context: Context) : SystemVolume {
     }
 }
 
-private class BackdropPlayerFrost(private val backdrop: SnapshotBackdrop) : PlayerFrost {
+private class BackdropPlayerFrost(
+    private val backdrop: SnapshotBackdrop,
+    val liveBackdrop: LayerBackdrop,
+) : PlayerFrost {
     @Composable
-    override fun Modifier.frostSource(): Modifier = snapshotBackdropSource(backdrop)
+    override fun Modifier.frostSource(): Modifier =
+        snapshotBackdropSource(backdrop).layerBackdrop(liveBackdrop)
 
     override fun capture() = backdrop.capture()
 

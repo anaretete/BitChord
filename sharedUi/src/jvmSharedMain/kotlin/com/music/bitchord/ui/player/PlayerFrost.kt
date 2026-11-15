@@ -54,6 +54,7 @@ interface PlayerFrost {
  * the platform can't draw it, or "reduce dynamic blur" is on.
  */
 val LocalPlayerFrost = staticCompositionLocalOf<PlayerFrost?> { null }
+val LocalPlayerLiveFrost = staticCompositionLocalOf<PlayerFrost?> { null }
 
 /**
  * The player's outermost frame: the player itself, the source of [frost]'s
@@ -95,7 +96,11 @@ internal fun FrostedPlayerFrame(
     Box(modifier.fillMaxSize()) {
         val source = if (frost != null) with(frost) { Modifier.frostSource() } else Modifier
         Box(Modifier.fillMaxSize().then(source)) {
-            CompositionLocalProvider(LocalPlayerChrome provides chrome, content = content)
+            CompositionLocalProvider(
+                LocalPlayerChrome provides chrome,
+                LocalPlayerLiveFrost provides frost,
+                content = content,
+            )
         }
         CompositionLocalProvider(LocalPlayerFrost provides frost?.takeIf { !live }) {
             overlays()

@@ -761,9 +761,11 @@ internal fun CircleGlyph(
         // The disc carries the blend, dodged as the bottom row's glyphs are, and
         // the glyph sits on it in plain white. The ink is mixed in at a few times
         // the plain disc's strength: a dodge laid on this thinly is next to nothing.
+        val glassModifier = PlayerPlatform.host.liquidGlassSurface(CircleShape, active = active)
         Box(
             Modifier
                 .matchParentSize()
+                .then(glassModifier)
                 .vibrantChrome(chrome)
                 .background(
                     if (chrome) {
@@ -914,10 +916,12 @@ private fun Pill(
     modifier: Modifier = Modifier,
     content: @Composable RowScope.() -> Unit,
 ) {
+    val glassModifier = PlayerPlatform.host.liquidGlassSurface(CircleShape, active = false)
     Row(
         modifier = modifier
             .height(BOTTOM_ACTION_SIZE)
             .clip(CircleShape)
+            .then(glassModifier)
             .background(Color.White.copy(alpha = 0.12f))
             .animateContentSize(
                 animationSpec = spring(
@@ -1294,9 +1298,12 @@ private fun BottomGlyph(
     val lastTap = remember { mutableLongStateOf(-tapWindowMs) }
     val tileColor = chromeWhite(BOTTOM_ACTIVE_TILE_ALPHA)
     val tileChrome = LocalPlayerChrome.current
+    val glassModifier = PlayerPlatform.host.liquidGlassSurface(CircleShape, active = highlighted)
     Box(
         modifier = Modifier
             .size(BOTTOM_ACTION_SIZE)
+            .clip(CircleShape)
+            .then(glassModifier)
             // Lit, Apple's way: a rounded tile with the glyph cut out of it, the
             // artwork showing through. The glyph is drawn first and the tile over
             // it with SrcOut, which keeps the tile only where the glyph is not.

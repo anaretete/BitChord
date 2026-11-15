@@ -157,6 +157,16 @@ interface PlayerHost {
      */
     @Composable
     fun LyricsShareSheet(hazeState: HazeState, request: LyricsShareRequest, onDismiss: () -> Unit) = Unit
+
+    /**
+     * Liquid glass surface for player buttons and capsules, sampling the
+     * player's live backdrop when supported.
+     */
+    @Composable
+    fun liquidGlassSurface(
+        shape: androidx.compose.ui.graphics.Shape,
+        active: Boolean = false,
+    ): androidx.compose.ui.Modifier = androidx.compose.ui.Modifier
 }
 
 private val NoCast = MutableStateFlow(CastUi())
