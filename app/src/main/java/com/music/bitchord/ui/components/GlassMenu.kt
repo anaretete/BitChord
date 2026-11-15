@@ -223,6 +223,12 @@ fun <T : Any> ExpoGlassMenuHost(
     if (menuItems.isEmpty()) return
 
     val isExpanded = item != null
+    LaunchedEffect(isExpanded, anchor) {
+        MenuAnchor.activeAnchor = if (isExpanded) anchor else null
+    }
+    DisposableEffect(Unit) {
+        onDispose { MenuAnchor.activeAnchor = null }
+    }
     var rootOffset by remember { mutableStateOf(Offset.Zero) }
     var rootMeasured by remember { mutableStateOf(false) }
     val density = LocalDensity.current
@@ -253,7 +259,7 @@ fun <T : Any> ExpoGlassMenuHost(
                     onDismissRequest = onDismiss,
                     items = menuItems,
                     modifier = Modifier.matchParentSize(),
-                    glass = true,
+                    glass = false,
                 )
             }
         } else {
@@ -278,6 +284,7 @@ fun GlassMenuButton(
     items: List<GlassMenuItemRecord>,
     modifier: Modifier = Modifier,
     alignment: String = "auto",
+    glass: Boolean = false,
     cornerRadius: Float? = null,
     content: @Composable () -> Unit,
 ) {
@@ -318,7 +325,7 @@ fun GlassMenuButton(
                 }
             }
             GlassMenuAndroidView(context).apply {
-                glass = true
+                this.glass = glass
                 this.cornerRadius = cornerRadius
                 this.config = menuConfig
                 this.alignment = alignment
@@ -338,7 +345,7 @@ fun GlassMenuButton(
             }
         },
         update = { view ->
-            view.glass = true
+            view.glass = glass
             view.cornerRadius = cornerRadius
             if (view.config != menuConfig) view.config = menuConfig
             view.alignment = alignment

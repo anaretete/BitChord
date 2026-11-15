@@ -1,12 +1,18 @@
 package com.music.bitchord.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -29,6 +35,9 @@ import androidx.compose.ui.layout.onPlaced
 object MenuAnchor {
     private var bounds: Rect? = null
     private var recordedAt = 0L
+
+    /** The anchor currently open in a morphing menu, used to hide the static trigger button underneath. */
+    var activeAnchor by mutableStateOf<Rect?>(null)
 
     internal fun record(bounds: Rect) {
         this.bounds = bounds
@@ -53,8 +62,19 @@ object MenuAnchor {
 @Composable
 fun Modifier.menuAnchor(): Modifier {
     val anchor = remember { AnchorCoordinates() }
+    val active = MenuAnchor.activeAnchor
+    val isActive = active != null && anchor.bounds == active
+    val triggerAlpha by animateFloatAsState(
+        targetValue = if (isActive) 0f else 1f,
+        animationSpec = tween(durationMillis = 120),
+        label = "menuAnchorAlpha",
+    )
     return this
-        .onPlaced { anchor.coordinates = it }
+        .onPlaced {
+            anchor.coordinates = it
+            anchor.bounds = it.boundsInWindow()
+        }
+        .graphicsLayer { alpha = triggerAlpha }
         .pointerInput(Unit) {
             awaitEachGesture {
                 awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
@@ -65,6 +85,7 @@ fun Modifier.menuAnchor(): Modifier {
 
 private class AnchorCoordinates {
     var coordinates: LayoutCoordinates? = null
+    var bounds by mutableStateOf<Rect?>(null)
 }
 
 /**

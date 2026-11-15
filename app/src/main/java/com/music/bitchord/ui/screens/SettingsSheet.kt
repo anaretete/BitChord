@@ -565,7 +565,7 @@ fun SettingsScreen(
                             onDismissRequest = { wifiMenuOpen = false },
                             items = wifiItems,
                             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                         )
                     }
                 }
@@ -598,7 +598,7 @@ fun SettingsScreen(
                             onDismissRequest = { cellularMenuOpen = false },
                             items = cellularItems,
                             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                         )
                     }
                 }
@@ -686,7 +686,7 @@ fun SettingsScreen(
                         onDismissRequest = { dlQualityMenuOpen = false },
                         items = dlQualityItems,
                         modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                     )
                 }
             }
@@ -809,7 +809,7 @@ fun SettingsScreen(
                         onDismissRequest = { bitPerfectMenuOpen = false },
                         items = bitPerfectItems,
                         modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                         alignment = "right",
                     )
                 }
@@ -960,7 +960,7 @@ fun SettingsScreen(
                             onDismissRequest = { automixPerfMenuOpen = false },
                             items = automixPerfItems,
                             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                         )
                     }
                 }
@@ -1169,7 +1169,7 @@ fun SettingsScreen(
                         onDismissRequest = { fontMenuOpen = false },
                         items = fontItems,
                         modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                     )
                 }
             }
@@ -1954,7 +1954,7 @@ fun SettingsScreen(
                         onDismissRequest = { languageMenuOpen = false },
                         items = languageItems,
                         modifier = Modifier.align(Alignment.CenterEnd).padding(end = 16.dp).size(40.dp),
-                        glass = true,
+                        glass = false,
                     )
                 }
             }

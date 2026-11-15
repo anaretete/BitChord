@@ -150,7 +150,7 @@ fun AccountProfileSelector(
                 onDismissRequest = onDismiss,
                 items = items,
                 alignment = "right",
-                glass = true,
+                glass = false,
             )
         }
         return

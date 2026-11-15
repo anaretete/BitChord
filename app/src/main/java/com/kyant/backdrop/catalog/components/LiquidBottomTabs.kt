@@ -68,6 +68,7 @@ fun LiquidBottomTabs(
     tabsCount: Int,
     modifier: Modifier = Modifier,
     accentColor: Color = MaterialTheme.colorScheme.primary,
+    onPressProgress: (Float) -> Unit = {},
     content: @Composable RowScope.() -> Unit,
 ) {
     val isLightTheme = !isSystemInDarkTheme()
@@ -132,6 +133,12 @@ fun LiquidBottomTabs(
                 },
             )
         }
+        val currentOnPressProgress by rememberUpdatedState(onPressProgress)
+        LaunchedEffect(dampedDragAnimation) {
+            snapshotFlow { dampedDragAnimation.pressProgress }
+                .collectLatest { currentOnPressProgress(it) }
+        }
+
         val currentSelectedTabIndex by rememberUpdatedState(selectedTabIndex)
         LaunchedEffect(Unit) {
             snapshotFlow { currentSelectedTabIndex() }

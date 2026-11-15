@@ -4113,16 +4113,25 @@ private fun BitChordApp(
                             // Not on a release page, whose pill already carries
                             // three of its own controls — Apple Music leaves the
                             // profile off its album pages too.
-                            if (!isReleaseDetail) TopBarAccountButton(
-                                account = account,
-                                onClick = {
-                                    if (signedIn) {
-                                        viewModel.loadChannels()
-                                        showAccountSelector = true
-                                    } else navigator.push(AppRoute.Settings)
-                                },
-                                onSwipeProfile = { forward -> viewModel.stepProfile(forward) },
-                            )
+                            if (!isReleaseDetail) {
+                                val accountButtonAlpha by animateFloatAsState(
+                                    targetValue = if (showAccountSelector) 0f else 1f,
+                                    animationSpec = tween(durationMillis = 120),
+                                    label = "accountButtonAlpha",
+                                )
+                                Box(Modifier.graphicsLayer { alpha = accountButtonAlpha }) {
+                                    TopBarAccountButton(
+                                        account = account,
+                                        onClick = {
+                                            if (signedIn) {
+                                                viewModel.loadChannels()
+                                                showAccountSelector = true
+                                            } else navigator.push(AppRoute.Settings)
+                                        },
+                                        onSwipeProfile = { forward -> viewModel.stepProfile(forward) },
+                                    )
+                                }
+                            }
                         }
                     },
                 )

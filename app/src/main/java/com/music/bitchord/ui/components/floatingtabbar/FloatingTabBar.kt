@@ -83,6 +83,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -92,6 +93,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -660,6 +662,7 @@ private fun SharedTransitionScope.ExpandedBar(
         // instead of shrinking to a narrow centred cluster. It also removes the
         // overflow this row used to be able to hit: the pill is now given a
         // width to divide rather than growing past the screen to fit its labels.
+        var tabPressProgress by remember { mutableFloatStateOf(0f) }
         Row(
             horizontalArrangement = Arrangement.spacedBy(sizes.componentSpacing),
             verticalAlignment = Alignment.CenterVertically,
@@ -677,7 +680,10 @@ private fun SharedTransitionScope.ExpandedBar(
                     elevations = elevations,
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
-                    modifier = Modifier.weight(1f)
+                    onPressProgress = { tabPressProgress = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .zIndex(2f)
                 )
             }
 
@@ -690,6 +696,14 @@ private fun SharedTransitionScope.ExpandedBar(
                     animatedVisibilityScope = animatedVisibilityScope,
                     tabBarContentModifier = tabBarContentModifier,
                     modifier = Modifier
+                        .zIndex(0f)
+                        .graphicsLayer {
+                            val p = tabPressProgress.coerceIn(0f, 1f)
+                            alpha = 1f - p
+                            val s = 1f - 0.15f * p
+                            scaleX = s
+                            scaleY = s
+                        }
                         .fillMaxHeight()
                         .aspectRatio(1f)
                 )
@@ -746,6 +760,7 @@ private fun SharedTransitionScope.ExpandedTabs(
     elevations: FloatingTabBarElevations,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
+    onPressProgress: (Float) -> Unit = {},
     tabBarContentModifier: @Composable () -> Modifier
 ) {
     val inlineTab = scope.getInlineTab(selectedTabKey)
@@ -779,6 +794,7 @@ private fun SharedTransitionScope.ExpandedTabs(
             backdrop = appBackdrop,
             tabsCount = scope.tabs.size,
             accentColor = glassContentColor(),
+            onPressProgress = onPressProgress,
             modifier = modifier.sharedElement(
                 sharedContentState = rememberSharedContentState("tabGroup"),
                 animatedVisibilityScope = animatedVisibilityScope,
