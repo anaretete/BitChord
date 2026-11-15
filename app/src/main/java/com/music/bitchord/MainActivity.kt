@@ -3938,11 +3938,9 @@ private fun BitChordApp(
                         // be mistaken for a per-page action — Home, at rest.
                         if (route == null && detail == null && selectedTab == TAB_HOME) {
                             updateNotice?.let { update ->
-                                com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                IconButton(
                                     onClick = { showUpdateDialog = true },
                                     modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
-                                    size = 40.dp,
-                                    contentColor = MaterialTheme.colorScheme.primary,
                                 ) {
                                     Icon(
                                         // An arrow rising out of a bar, not the
@@ -3964,14 +3962,12 @@ private fun BitChordApp(
                             // a history is a record of what was played, which reads
                             // as that tab's business rather than every tab's.
                             if (route == null && detail == null && selectedTab == TAB_LIBRARY) {
-                                com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                IconButton(
                                     onClick = {
                                         navigator.push(AppRoute.History)
                                         viewModel.loadHistory()
                                     },
                                     modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
-                                    size = 40.dp,
-                                    contentColor = MaterialTheme.colorScheme.onSurface,
                                 ) {
                                     Icon(
                                         Icons.Rounded.History,
@@ -4024,11 +4020,9 @@ private fun BitChordApp(
                             if ((isReleaseDetail || isLocalDetail) && detail != null) {
                                 val releaseSongs = (detail.songs as? UiState.Success)?.data.orEmpty()
                                 if (releaseSongs.isNotEmpty()) {
-                                    com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                    IconButton(
                                         onClick = { detailSearching = !detailSearching },
                                         modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
-                                        size = 40.dp,
-                                        contentColor = MaterialTheme.colorScheme.onSurface,
                                     ) {
                                         Icon(
                                             if (detailSearching) Icons.Rounded.Close else BitChordIcons.Search,
@@ -4111,12 +4105,10 @@ private fun BitChordApp(
                                     // tracks arrive stamped with the album they came
                                     // off, which is what the download record groups
                                     // them under.
-                                    com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                    IconButton(
                                         modifier = Modifier
                                             .menuAnchor()
                                             .graphicsLayer { alpha = actionsFadeAlpha },
-                                        size = 40.dp,
-                                        contentColor = MaterialTheme.colorScheme.onSurface,
                                         onClick = {
                                             openBrowseMenu(BrowseTarget(
                                                 browseId = detail.browseId,
@@ -4150,10 +4142,8 @@ private fun BitChordApp(
                             if (detail != null && !isLocalDetail && detail.type == BrowseType.ARTIST &&
                                 detailActiveShelf == null && detail.browseId.startsWith("UC")
                             ) {
-                                com.kyant.backdrop.catalog.components.LiquidIconButton(
+                                IconButton(
                                     modifier = Modifier.graphicsLayer { alpha = actionsFadeAlpha },
-                                    size = 40.dp,
-                                    contentColor = MaterialTheme.colorScheme.onSurface,
                                     onClick = {
                                         val sendIntent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"
@@ -4254,8 +4244,8 @@ private fun BitChordApp(
                                         iconSlots = accountIconSlots,
                                         alignment = "right",
                                         glass = false,
-                                        cornerRadius = 24f,
-                                        modifier = Modifier.size(48.dp),
+                                        cornerRadius = 22f,
+                                        modifier = Modifier.size(44.dp),
                                         onOpenChange = { isOpen ->
                                             if (isOpen) viewModel.loadChannels()
                                         },

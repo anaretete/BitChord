@@ -95,10 +95,11 @@ internal class GlassMenuSession(
       opensFromRight -> source.right - width
       else -> source.left
     }.coerceIn(margin, max(windowWidth - width - margin, margin))
-    val roomBelow = bottom - source.top
-    val roomAbove = source.bottom - top
+    val anchorGap = 8f * density
+    val roomBelow = bottom - (source.bottom + anchorGap)
+    val roomAbove = (source.top - anchorGap) - top
     opensAbove = roomBelow < height && roomAbove > roomBelow
-    val menuTop = (if (opensAbove) source.bottom - height else source.top)
+    val menuTop = (if (opensAbove) source.top - anchorGap - height else source.bottom + anchorGap)
       .coerceIn(top, max(bottom - height, top))
     target.set(left, menuTop, left + width, menuTop + height)
     updateCaptureBounds()

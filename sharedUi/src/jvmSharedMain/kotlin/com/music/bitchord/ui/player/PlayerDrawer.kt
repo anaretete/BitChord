@@ -40,12 +40,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -53,8 +57,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.music.bitchord.ui.components.MENU_FROST_ALPHA
+import com.music.bitchord.ui.components.MenuAnchor
 import com.music.bitchord.ui.components.MenuFrostDark
 import com.music.bitchord.ui.components.liveMenuFrost
 import com.music.bitchord.ui.utils.containSheetGestures
@@ -124,9 +130,19 @@ fun PlayerDrawer(
     val scrimAlpha = if (height > 0) (1f - offset / height).coerceIn(0f, 1f) else 1f
 
     // Flipped on the first composition so the drawer travels up from the edge
-    // instead of appearing over the player fully formed.
+    // or morphs out of the tapped anchor button instead of popping in.
+    val anchorBounds = remember { MenuAnchor.consume() }
+    var ownBounds by remember { mutableStateOf<Rect?>(null) }
     var shown by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { shown = true }
+    val morphProgress by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.72f,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "playerDrawerMorph",
+    )
 
     // The drawer's rows scroll, and that scroll takes the finger before the
     // drag detector below ever sees it. So a pull down past the top of the
@@ -190,11 +206,7 @@ fun PlayerDrawer(
             ),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        AnimatedVisibility(
-            visible = shown,
-            enter = slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it },
-            exit = slideOutVertically(tween(180)) { it },
-        ) {
+        val drawerColumn: @Composable () -> Unit = {
         Column(
             modifier = Modifier
                 // Capped so a phone full of rows scrolls inside the drawer
@@ -206,7 +218,25 @@ fun PlayerDrawer(
                 .widthIn(max = DRAWER_MAX_WIDTH)
                 .fillMaxWidth()
                 .onSizeChanged { height = it.height }
+                .onGloballyPositioned { ownBounds = it.boundsInWindow() }
                 .offset { IntOffset(0, offset.roundToInt()) }
+                .then(
+                    if (anchorBounds != null) {
+                        Modifier.graphicsLayer {
+                            val p = morphProgress.coerceIn(0f, 1f)
+                            scaleX = lerp(0.18f, 1f, p)
+                            scaleY = lerp(0.12f, 1f, p)
+                            alpha = ((p - 0.08f) / 0.92f).coerceIn(0f, 1f)
+                            val own = ownBounds
+                            if (own != null) {
+                                translationX = lerp(anchorBounds.center.x - own.center.x, 0f, p)
+                                translationY = lerp(anchorBounds.center.y - own.center.y, 0f, p)
+                            }
+                        }
+                    } else {
+                        Modifier
+                    },
+                )
                 .clip(DRAWER_SHAPE)
                 .then(
                     // The ⋯ menu's frost, so the drawers and the menu read as one
@@ -265,6 +295,17 @@ fun PlayerDrawer(
             )
             content()
         }
+        }
+        if (anchorBounds != null) {
+            drawerColumn()
+        } else {
+            AnimatedVisibility(
+                visible = shown,
+                enter = slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it },
+                exit = slideOutVertically(tween(180)) { it },
+            ) {
+                drawerColumn()
+            }
         }
     }
 }

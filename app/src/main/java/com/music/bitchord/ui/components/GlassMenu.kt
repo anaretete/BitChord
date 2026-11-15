@@ -244,37 +244,6 @@ fun <T : Any> ExpoGlassMenuHost(
         if (activeAnchor != null) {
             val widthDp = with(density) { activeAnchor.width.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
             val heightDp = with(density) { activeAnchor.height.coerceAtLeast(1f).toDp() }.coerceAtLeast(24.dp)
-            val bridgeProgress by androidx.compose.animation.core.animateFloatAsState(
-                targetValue = if (isExpanded && rootMeasured) 1f else 0f,
-                animationSpec = androidx.compose.animation.core.spring(
-                    dampingRatio = 0.68f,
-                    stiffness = 340f,
-                ),
-                label = "expoMenuMetaballBridge",
-            )
-            if (supportsNativeGlassMenu && bridgeProgress > 0.005f) {
-                val estWidthPx = with(density) { 248.dp.toPx() }
-                val estHeightPx = with(density) { (menuItems.size.coerceIn(2, 6) * 48).dp.toPx() }
-                val gapPx = with(density) { 10.dp.toPx() }
-                val localAnchor = Rect(
-                    left = activeAnchor.left - rootOffset.x,
-                    top = activeAnchor.top - rootOffset.y,
-                    right = activeAnchor.right - rootOffset.x,
-                    bottom = activeAnchor.bottom - rootOffset.y,
-                )
-                val localPopup = Rect(
-                    left = (localAnchor.right - estWidthPx).coerceAtLeast(with(density) { 12.dp.toPx() }),
-                    top = localAnchor.bottom + gapPx,
-                    right = (localAnchor.right - estWidthPx).coerceAtLeast(with(density) { 12.dp.toPx() }) + estWidthPx,
-                    bottom = localAnchor.bottom + gapPx + estHeightPx,
-                )
-                LiquidMetaballBridgeOverlay(
-                    anchorBounds = localAnchor,
-                    popupBounds = localPopup,
-                    progress = bridgeProgress,
-                    cornerRadius = 22.dp,
-                )
-            }
             Box(
                 modifier = Modifier
                     .offset {
@@ -362,7 +331,7 @@ fun GlassMenuButton(
                 }
             }
             val iconHost = FrameLayout(context).apply {
-                tag = "GlassMenu.iconHost"
+                tag = "glass-menu-icons"
                 visibility = android.view.View.INVISIBLE
             }
             GlassMenuAndroidView(context).apply {
@@ -405,7 +374,7 @@ fun GlassMenuButton(
             if (view.items != items) view.items = items
             val iconHost = (0 until view.childCount)
                 .map { view.getChildAt(it) }
-                .firstOrNull { it.tag == "GlassMenu.iconHost" } as? FrameLayout
+                .firstOrNull { it.tag == "glass-menu-icons" } as? FrameLayout
             if (iconHost != null) {
                 while (iconHost.childCount > currentIconSlots.size) {
                     iconHost.removeViewAt(iconHost.childCount - 1)
