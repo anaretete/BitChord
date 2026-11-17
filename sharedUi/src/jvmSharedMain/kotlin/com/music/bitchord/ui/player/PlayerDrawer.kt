@@ -207,6 +207,7 @@ fun PlayerDrawer(
         contentAlignment = Alignment.BottomCenter,
     ) {
         val drawerColumn: @Composable () -> Unit = {
+        val cardShape = if (anchorBounds != null) RoundedCornerShape(28.dp) else DRAWER_SHAPE
         Column(
             modifier = Modifier
                 // Capped so a phone full of rows scrolls inside the drawer
@@ -217,6 +218,13 @@ fun PlayerDrawer(
                 // own BottomCenter alignment once it is narrower.
                 .widthIn(max = DRAWER_MAX_WIDTH)
                 .fillMaxWidth()
+                .then(
+                    if (anchorBounds != null) {
+                        Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                    } else {
+                        Modifier
+                    },
+                )
                 .onSizeChanged { height = it.height }
                 .onGloballyPositioned { ownBounds = it.boundsInWindow() }
                 .offset { IntOffset(0, offset.roundToInt()) }
@@ -237,7 +245,7 @@ fun PlayerDrawer(
                         Modifier
                     },
                 )
-                .clip(DRAWER_SHAPE)
+                .clip(cardShape)
                 .then(
                     // The ⋯ menu's frost, so the drawers and the menu read as one
                     // material over the player — its own where the player is
@@ -245,7 +253,7 @@ fun PlayerDrawer(
                     when {
                         reduceDynamicBlur -> Modifier.background(MenuFrostDark)
                         frost != null -> with(frost) {
-                            Modifier.frostPanel(DRAWER_SHAPE, MenuFrostDark.copy(alpha = MENU_FROST_ALPHA))
+                            Modifier.frostPanel(cardShape, MenuFrostDark.copy(alpha = MENU_FROST_ALPHA))
                         }
                         else -> Modifier.liveMenuFrost(hazeState, MenuFrostDark)
                     }

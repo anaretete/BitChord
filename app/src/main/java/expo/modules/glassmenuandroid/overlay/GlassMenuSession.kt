@@ -186,7 +186,7 @@ internal class GlassMenuSession(
     state.lockedFieldStep = lockedFieldStep
     state.radiusX = frame.radiusX
     state.radiusY = frame.radiusY
-    state.hasSource = anchor.glass
+    state.hasSource = true
     state.source.set(frame.sourceLobe)
     val swell = anchor.jelly.swell(anchor.height.toFloat(), density, anchor.triggerConfig.jelly) - 1f
     state.source.inset(-state.source.width() * swell / 2f, -state.source.height() * swell / 2f)
@@ -195,7 +195,7 @@ internal class GlassMenuSession(
     state.lensHeight = frame.lensHeight
     state.lensAmount = frame.lensAmount
     state.materialProgress = frame.contentProgress
-    state.surfaceOpacity = if (anchor.glass) 1f else frame.contentProgress
+    state.surfaceOpacity = 1f
     state.dark = content.dark
     state.config = anchor.config
     state.trigger = anchor.triggerConfig
@@ -243,13 +243,12 @@ internal class GlassMenuSession(
       plate.setAlpha(frame.rowsOpacity)
     }
     renderer.drawForeground(canvas, state, animating, frame.portalBlur * morphBlur) { recording ->
-      if (anchor.glass && frame.sourceOpacity > .001f) recording.drawRenderNode(trigger)
+      if (frame.sourceOpacity > .001f) recording.drawRenderNode(trigger)
       if (frame.rowsOpacity > .001f) {
         if (plate != null) recording.drawRenderNode(plate)
         recording.drawRenderNode(rows)
       }
     }
-    if (!anchor.glass && frame.sourceOpacity > .001f) canvas.drawRenderNode(trigger)
   }
 
   private fun blur(radius: Float): RenderEffect? =

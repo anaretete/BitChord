@@ -259,7 +259,7 @@ fun <T : Any> ExpoGlassMenuHost(
                     onDismissRequest = onDismiss,
                     items = menuItems,
                     modifier = Modifier.matchParentSize(),
-                    glass = false,
+                    glass = true,
                 )
             }
         } else {
