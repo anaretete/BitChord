@@ -181,8 +181,8 @@ android {
              * code, which is where the time goes. Checked on a device through the
              * `benchmark` build type below before it ships.
              */
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
